@@ -1,1 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AssignManager + Hajira</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
 
+  <style>
+    /* ══ ASSIGN MANAGER THEME VARS ══ */
+    :root,[data-theme="light"]{
+      --bg:#F6F4F0;--bg2:#EDEAE3;--surface:#FFFFFF;--surface2:#F2F0EC;
+      --border:#E2DED6;--border2:#C9C4B8;--text:#18160F;--text2:#5A5548;--text3:#9E998E;
+      --accent:#5C3FD6;--accent2:#7B62E8;--accent-soft:#EFECFD;--accent-glow:rgba(92,63,214,0.18);
+      --red:#D63F3F;--red-soft:#FDF0F0;--amber:#C47A00;--amber-soft:#FEF5E0;
+      --blue:#2563EB;--blue-soft:#EFF6FF;--green:#1E9E6C;--green-soft:#E8F8F2;
+      --shadow:rgba(24,22,15,0.10);--shadow-lg:rgba(24,22,15,0.16);
+      --login-bg:#18160F;--login-card:#232018;--login-border:#333028;
+      --chip-bg:#EDE9FB;--chip-text:#5C3FD6;
+      --group-bg:#F9F8FF;--group-border:rgba(92,63,214,0.12);
+      /* Hajira vars mapped to light */
+      --h-bg:#F6F4F0;--h-s1:#EDEAE3;--h-s2:#F2F0EC;--h-card:#FFFFFF;
+      --h-b:#E2DED6;--h-b2:#C9C4B8;
+      --h-a:#5C3FD6;--h-a2:#7B62E8;--h-a-glow:rgba(92,63,214,0.18);
+      --h-g:#1E9E6C;--h-g2:rgba(30,158,108,0.12);
+      --h-r:#D63F3F;--h-r2:rgba(214,63,63,0.12);
+      --h-y:#C47A00;--h-y2:rgba(196,122,0,0.10);
+      --h-p:#7B62E8;--h-p2:rgba(123,98,232,0.12);
+      --h-t:#18160F;--h-t2:#5A5548;--h-t3:#9E998E;
+    }
+    [data-theme="dark"]{
+      --bg:#0D0C10;--bg2:#13121A;--surface:#1A1924;--surface2:#22212F;
+      --border:#2C2B3D;--border2:#3D3B52;--text:#F0EFF8;--text2:#A09FB8;--text3:#635F80;
+      --accent:#7B62E8;--accent2:#9B82F8;--accent-soft:#1A1730;--accent-glow:rgba(123,98,232,0.25);
+      --red:#F07070;--red-soft:#200D0D;--amber:#F0B840;--amber-soft:#201507;
+      --blue:#60A5FA;--blue-soft:#0D1829;--green:#34D399;--green-soft:#0A1F16;
+      --shadow:rgba(0,0,0,0.4);--shadow-lg:rgba(0,0,0,0.6);
+      --login-bg:#0D0C10;--login-card:#1A1924;--login-border:#2C2B3D;
+      --chip-bg:#1A1730;--chip-text:#9B82F8;
+      --group-bg:#13121A;--group-border:rgba(123,98,232,0.15);
+      /* Hajira dark */
+      --h-bg:#0D0C10;--h-s1:#13121A;--h-s2:#1A1924;--h-card:#1A1924;
+      --h-b:#2C2B3D;--h-b2:#3D3B52;
+      --h-a:#7B62E8;--h-a2:#9B82F8;--h-a-glow:rgba(123,98,232,0.25);
+      --h-g:#34D399;--h-g2:rgba(52,211,153,0.12);
+      --h-r:#F07070;--h-r2:rgba(240,112,112,0.12);
+      --h-y:#F0B840;--h-y2:rgba(240,184,64,0.10);
+      --h-p:#9B82F8;--h-p2:rgba(155,130,248,0.12);
+      --h-t:#F0EFF8;--h-t2:#A09FB8;--h-t3:#635F80;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Oxanium',sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;overflow-x:hidden;min-height:100vh}
+    body,body *{transition:background-color .28s ease,border-color .28s ease,color .22s ease,box-shadow .22s ease}
+
+    /* ══ ANIMATIONS ══ */
+    .shimmer{background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite linear}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    .toast-hide{transform:translateY(-14px) scale(.95);opacity:0;pointer-events:none}
+    .toast-show{transform:translateY(0) scale(1);opacity:1;pointer-events:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner{animation:spin .65s linear infinite;display:inline-block}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+    .shake{animation:shake .32s ease}
+    @keyframes pulse-anim{0%,100%{opacity:1}50%{opacity:.3}}
+    .pulse-dot{animation:pulse-anim 2.4s infinite}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both}
+    .fu1{animation-delay:.00s}.fu2{animation-delay:.08s}.fu3{animation-delay:.16s}.fu4{animation-delay:.24s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes tagPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .overdue-blink{animation:blink 2s ease infinite}
+    @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+    .wobble{animation:wobble .5s ease}
+    @keyframes ripple{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+    @keyframes pulse{from{opacity:.4}to{opacity:1}}
+
+    /* ══ MODULE TOGGLE ══ */
+    .module-toggle{
+      display:flex;align-items:center;background:var(--surface2);border:1.5px solid var(--border);
+      border-radius:99px;padding:4px;gap:2px;
+    }
+    .mod-btn{
+      padding:7px 18px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.08em;
+      text-transform:uppercase;border:none;cursor:pointer;font-family:'Oxanium',sans-serif;
+      transition:all .22s cubic-bezier(.4,0,.2,1);color:var(--text3);background:transparent;
+    }
+    .mod-btn.active{background:var(--accent);color:white;box-shadow:0 4px 16px var(--accent-glow)}
+
+    /* ══ ASSIGN MANAGER STYLES ══ */
+    .modal-sheet{transition:transform .36s cubic-bezier(.4,0,.2,1)}
+    #profileDrawer{transition:transform .32s cubic-bezier(.4,0,.2,1)}
+    #drawerBackdrop{transition:opacity .25s ease}
+    #loginOverlay{transition:opacity .4s ease}
+    #loginOverlay.hide{opacity:0;pointer-events:none}
+    #stickyHeader.scrolled{box-shadow:0 2px 32px var(--shadow)}
+    .asgn-card{transition:box-shadow .22s ease,transform .22s ease,border-color .22s ease}
+    .asgn-card:hover{box-shadow:0 16px 48px var(--shadow-lg);transform:translateY(-3px);border-color:var(--accent)!important}
+    .card-accent-bar{position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);opacity:0;transition:opacity .22s ease}
+    .asgn-card:hover .card-accent-bar{opacity:1}
+    .field:focus{outline:none;box-shadow:0 0 0 3px var(--accent-glow);border-color:var(--accent)!important}
+    .t-knob{transition:transform .24s cubic-bezier(.4,0,.2,1)}
+    .glass-nav{background:color-mix(in srgb,var(--surface) 85%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1.5px solid var(--border)}
+    .login-gradient{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(92,63,214,0.22) 0%,transparent 70%),var(--login-bg)}
+    .google-btn{position:relative;overflow:hidden;transition:transform .18s ease}
+    .google-btn:active{transform:scale(.97)}
+    .google-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 60%)}
+    .dm-toggle-track{position:relative;width:52px;height:28px;border-radius:99px;cursor:pointer;transition:background .25s ease;border:1.5px solid var(--border2)}
+    .dm-toggle-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .24s cubic-bezier(.4,0,.2,1)}
+    .topic-block{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0}
+    .nav-btn{position:relative}
+    .nav-btn.active::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent)}
+    .fsel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239E998E'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px!important;cursor:pointer;transition:background-color .2s,border-color .2s,box-shadow .2s}
+    .fsel:focus{outline:none;box-shadow:0 0 0 2px var(--accent-glow);border-color:var(--accent)!important}
+    select option{background:var(--surface);color:var(--text)}
+    .fchip{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip-bg);color:var(--chip-text);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);white-space:nowrap;animation:fadeIn .2s ease both}
+    .fchip-x{cursor:pointer;opacity:.55;font-size:13px;line-height:1;margin-left:2px;transition:opacity .15s;font-style:normal}
+    .fchip-x:hover{opacity:1}
+    #filterChipsRow{overflow:hidden;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .28s ease}
+    #filterChipsRow.collapsed{max-height:0;opacity:0}
+    #filterChipsRow.expanded{max-height:100px;opacity:1}
+    #filterSummaryBar{transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .28s ease,margin .28s ease}
+    #filterSummaryBar.hidden-bar{max-height:0;opacity:0;margin:0;overflow:hidden}
+    #filterSummaryBar.visible-bar{max-height:60px;opacity:1}
+    .course-group-header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--group-bg);border:1.5px solid var(--group-border);margin-bottom:10px;cursor:pointer;user-select:none}
+    .course-group-header:hover{border-color:var(--accent)}
+    .group-toggle-icon{transition:transform .22s ease}
+    .group-collapsed .group-toggle-icon{transform:rotate(-90deg)}
+    .group-body{overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1),opacity .25s ease}
+    .group-body.open{opacity:1}
+    .group-body.closed{opacity:0;max-height:0!important}
+    .sem-restricted{border-color:var(--accent)!important;background:var(--accent-soft)!important}
+    .sort-pill{padding:5px 12px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:background .18s,color .18s,border-color .18s;border:1.5px solid var(--border);background:var(--surface);color:var(--text3)}
+    .sort-pill.active{background:var(--accent);color:white;border-color:var(--accent)}
+    .sort-pill:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+    .stats-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .count-badge{min-width:20px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;padding:0 6px}
+    .cascade-active{border-color:color-mix(in srgb,var(--accent) 50%,transparent)!important;background:var(--accent-soft)!important}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+    /* ══ HAJIRA STYLES ══ */
+    .h-card{background:var(--h-card);border:1px solid var(--h-b);border-radius:14px;padding:16px}
+    .h-card-hover{transition:all .2s;cursor:pointer}
+    .h-card-hover:hover{border-color:var(--h-b2);transform:translateY(-2px);box-shadow:0 10px 36px rgba(0,0,0,.18)}
+    .h-badge{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.3px}
+    .h-badge-a{background:rgba(92,63,214,.14);color:var(--h-a);border:1px solid rgba(92,63,214,.2)}
+    .h-badge-g{background:var(--h-g2);color:var(--h-g);border:1px solid rgba(30,158,108,.2)}
+    .h-badge-y{background:var(--h-y2);color:var(--h-y);border:1px solid rgba(196,122,0,.2)}
+    .h-badge-r{background:var(--h-r2);color:var(--h-r);border:1px solid rgba(214,63,63,.2)}
+    .h-badge-p{background:var(--h-p2);color:var(--h-p);border:1px solid rgba(123,98,232,.2)}
+    .h-badge-num{background:rgba(92,63,214,.18);color:var(--h-a);border:1px solid rgba(92,63,214,.25);border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;min-width:24px;text-align:center}
+    .h-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+    .h-stat-box{background:var(--h-s2);border:1px solid var(--h-b);border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden}
+    .h-stat-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(92,63,214,.04),transparent);pointer-events:none}
+    .h-stat-box .num{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--h-a);line-height:1;margin-bottom:5px}
+    .h-stat-box .lbl{font-size:10px;color:var(--h-t3);text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+    .h-sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--h-t3);margin:22px 0 12px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:8px}
+    .h-sec::after{content:'';flex:1;height:1px;background:var(--h-b)}
+    #hCourseGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+    .h-cc-name{font-size:15px;font-weight:700;margin:10px 0 2px;line-height:1.35;color:var(--h-t)}
+    .h-cc-meta{font-size:12px;color:var(--h-t2);margin-bottom:12px;display:flex;flex-direction:column;gap:3px}
+    .h-cc-foot{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--h-b)}
+    .h-cc-count{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--h-g)}
+    .h-empty{text-align:center;padding:52px 20px;color:var(--h-t3);font-size:13px;border:1px dashed var(--h-b);border-radius:14px;grid-column:1/-1;line-height:1.6}
+    .h-filter-section{background:var(--h-s1);border:1px solid var(--h-b);border-radius:14px;padding:14px;margin-bottom:16px}
+    .h-filter-title{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--h-t3);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+    .h-filter-dropdowns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .h-filter-select{background:var(--h-card);border:1px solid var(--h-b);border-radius:9px;padding:8px 28px 8px 10px;color:var(--h-t);font-size:12px;font-family:'Oxanium',sans-serif;width:100%;cursor:pointer;outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E998E' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+    .h-filter-select:focus{border-color:var(--h-a);box-shadow:0 0 0 3px rgba(92,63,214,.1)}
+    .h-filter-select:disabled{opacity:.4;cursor:not-allowed}
+    .h-ftag{display:inline-flex;align-items:center;gap:5px;background:rgba(92,63,214,.1);border:1px solid rgba(92,63,214,.22);border-radius:20px;padding:4px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--h-a);letter-spacing:.3px;animation:tagPop .18s cubic-bezier(.4,0,.2,1)}
+    .h-ftag-x{background:none;border:none;cursor:pointer;color:var(--h-a);opacity:.6;font-size:13px;line-height:1;padding:0;transition:opacity .15s;font-family:'JetBrains Mono',monospace}
+    .h-ftag-x:hover{opacity:1}
+    .h-ftag-sem{background:rgba(30,158,108,.1);border-color:rgba(30,158,108,.22);color:var(--h-g)}
+    .h-ftag-course{background:rgba(123,98,232,.1);border-color:rgba(123,98,232,.22);color:var(--h-p)}
+    .h-clear-all-btn{background:none;border:1px solid transparent;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--h-t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:4px 8px;border-radius:6px;transition:all .15s;margin-left:auto}
+    .h-clear-all-btn:hover{color:var(--h-r);border-color:rgba(214,63,63,.2);background:var(--h-r2)}
+    .h-no-course-msg{text-align:center;padding:38px 20px;color:var(--h-t3);font-size:13px;border:1px dashed var(--h-b);border-radius:14px;grid-column:1/-1;line-height:1.7;animation:fadeIn .3s ease}
+    .h-back-btn{background:none;border:none;cursor:pointer;color:var(--h-t2);font-size:13px;font-weight:600;font-family:'Oxanium',sans-serif;display:flex;align-items:center;gap:6px;transition:color .2s;padding:0}
+    .h-back-btn:hover{color:var(--h-a)}
+    .h-detail-header{background:linear-gradient(135deg,rgba(92,63,214,.07),rgba(30,158,108,.04));border:1px solid var(--h-b);border-radius:14px;padding:18px;margin-bottom:14px}
+    .h-counter-wrap{display:flex;align-items:center;background:var(--h-s2);border:1px solid var(--h-b);border-radius:9px;overflow:hidden}
+    .h-counter-btn{background:none;border:none;cursor:pointer;color:var(--h-t2);width:36px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;transition:all .15s;flex-shrink:0}
+    .h-counter-btn:hover{background:var(--h-b);color:var(--h-a)}
+    .h-counter-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--h-a);flex:1;text-align:center;line-height:38px;border-left:1px solid var(--h-b);border-right:1px solid var(--h-b)}
+    .h-att-table{width:100%;border-collapse:collapse}
+    .h-att-table th{padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--h-t3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--h-b);background:var(--h-s2);font-weight:600}
+    .h-att-table td{padding:10px 12px;font-size:12px;border-bottom:1px solid rgba(92,63,214,.06)}
+    .h-att-table tr:last-child td{border-bottom:none}
+    .h-att-table tr:hover td{background:rgba(92,63,214,.02)}
+    .h-att-list-wrap{max-height:340px;overflow-y:auto}
+    .h-report-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+    @media(min-width:500px){.h-report-stats{grid-template-columns:repeat(4,1fr)}}
+    .h-rs-box{background:var(--h-card);border:1px solid var(--h-b);border-radius:14px;padding:14px;text-align:center}
+    .h-rs-num{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--h-a);line-height:1;margin-bottom:4px}
+    .h-rs-lbl{font-size:10px;color:var(--h-t3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+    .h-filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:var(--h-s2);border:1px solid var(--h-b);border-radius:14px;padding:12px}
+    .h-filter-bar select{background:var(--h-card);border:1px solid var(--h-b);border-radius:9px;padding:7px 28px 7px 10px;color:var(--h-t);font-size:13px;outline:none;font-family:'Oxanium',sans-serif;flex:1;min-width:120px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E998E' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .2s}
+    .h-filter-bar select:focus{border-color:var(--h-a);outline:none}
+    .h-filter-bar input[type=date]{background:var(--h-card);border:1px solid var(--h-b);border-radius:9px;padding:7px 10px;color:var(--h-t);font-size:13px;outline:none;font-family:'Oxanium',sans-serif;flex:1;min-width:120px;color-scheme:dark light}
+    .h-chart-wrap{background:var(--h-card);border:1px solid var(--h-b);border-radius:14px;padding:16px;margin-bottom:12px}
+    .h-chart-title{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--h-t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-weight:600}
+    .h-cr-row{background:var(--h-card);border:1px solid var(--h-b);border-radius:9px;padding:14px;margin-bottom:8px;transition:border-color .2s}
+    .h-cr-row:hover{border-color:var(--h-b2)}
+    .h-cr-name{font-size:13px;font-weight:700;margin-bottom:4px;color:var(--h-t)}
+    .h-cr-meta{font-size:11px;color:var(--h-t3);display:flex;flex-wrap:wrap;gap:8px}
+    .h-cr-num{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--h-a);line-height:1}
+    .h-cr-bar{height:3px;background:var(--h-b);border-radius:2px;margin-top:10px}
+    .h-cr-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--h-a),var(--h-g));transition:width .6s cubic-bezier(.4,0,.2,1)}
+    /* Hajira modal overlay */
+    .h-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(8px)}
+    .h-overlay.open{display:flex}
+    .h-modal{background:var(--h-s1);border:1px solid var(--h-b2);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:440px;animation:sheetUp .25s cubic-bezier(.4,0,.2,1);border-top:1.5px solid var(--border)}
+    @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .h-modal-handle{width:36px;height:4px;background:var(--h-b2);border-radius:2px;margin:0 auto 18px}
+    .h-modal-title{font-size:17px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px;letter-spacing:-.2px;color:var(--h-t);font-family:'Oxanium',sans-serif}
+    .h-inp{background:var(--h-s2);border:1px solid var(--h-b);border-radius:9px;padding:9px 12px;color:var(--h-t);font-size:13px;outline:none;font-family:'Oxanium',sans-serif;width:100%;transition:border-color .2s,box-shadow .2s}
+    .h-inp:focus{border-color:var(--h-a);box-shadow:0 0 0 3px rgba(92,63,214,.12)}
+    .h-inp::placeholder{color:var(--h-t3)}
+    .h-inp[type=date]{color-scheme:dark light}
+    .h-sel{background:var(--h-s2);border:1px solid var(--h-b);border-radius:9px;padding:9px 28px 9px 12px;color:var(--h-t);font-size:13px;outline:none;font-family:'Oxanium',sans-serif;width:100%;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E998E' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .2s,box-shadow .2s}
+    .h-sel:focus{border-color:var(--h-a);box-shadow:0 0 0 3px rgba(92,63,214,.12)}
+    .h-lbl{font-size:11px;color:var(--h-t3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.5px;display:block}
+    .h-btn{border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Oxanium',sans-serif;transition:all .18s;display:inline-flex;align-items:center;gap:6px;letter-spacing:.2px}
+    .h-btn-p{background:linear-gradient(135deg,var(--h-a),var(--h-a2));color:#fff;box-shadow:0 4px 14px rgba(92,63,214,.3)}
+    .h-btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(92,63,214,.45)}
+    .h-btn-g{background:var(--h-g2);color:var(--h-g);border:1px solid rgba(30,158,108,.25)}
+    .h-btn-g:hover{background:rgba(30,158,108,.2);transform:translateY(-1px)}
+    .h-btn-r{background:var(--h-r2);color:var(--h-r);border:1px solid rgba(214,63,63,.22)}
+    .h-btn-ghost{background:none;border:1px solid var(--h-b2);color:var(--h-t2)}
+    .h-btn-ghost:hover{border-color:var(--h-a);color:var(--h-a)}
+    .h-btn-sm{padding:5px 11px;font-size:11px;font-weight:700}
+    .h-btn-xs{padding:3px 8px;font-size:10px;font-weight:700}
+    /* Hajira confirm */
+    #hConfirmBox{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:16px;z-index:400;backdrop-filter:blur(10px)}
+    #hConfirmBox.open{display:flex}
+    .h-confirm-modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:100%;max-width:330px;animation:slideUp .22s ease;text-align:center}
+    @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    /* Hajira detail grid */
+    .h-detail-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:660px){.h-detail-grid{grid-template-columns:210px 1fr}}
+    /* Sync dot */
+    .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;display:inline-block}
+    .sync-dot.ok{background:var(--green)}
+    .sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite alternate}
+    /* Logo pulse */
+    .logo-pulse{width:8px;height:8px;background:var(--green);border-radius:50%;position:relative;flex-shrink:0;display:inline-block}
+    .logo-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--green);animation:ripple 2s infinite;opacity:0}
+    /* Module sections hidden */
+    .module-section{display:none}
+    .module-section.active{display:block}
+  </style>
+</head>
+
+<body class="pb-36">
+
+<!-- ══ TOAST ══ -->
+<div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[300] transition-all duration-300 toast-hide">
+  <div class="px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-2xl" style="background:var(--surface);border:1.5px solid var(--border);min-width:180px">
+    <span id="toastIcon" class="w-2 h-2 rounded-full flex-shrink-0 pulse-dot" style="background:var(--accent)"></span>
+    <span id="toastMsg" class="text-xs font-bold tracking-wide" style="color:var(--text)">Done</span>
+  </div>
+</div>
+
+<!-- ══ DELETE ASSIGNMENT MODAL ══ -->
+<div id="deleteModal" class="fixed inset-0 z-[200] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300" style="background:rgba(0,0,0,.35);backdrop-filter:blur(6px)">
+  <div class="modal-sheet w-full max-w-md rounded-t-[2.5rem] p-8 translate-y-full" style="background:var(--surface);border-top:1.5px solid var(--border)">
+    <div class="w-10 h-1.5 rounded-full mx-auto mb-7" style="background:var(--border2)"></div>
+    <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--red-soft)">
+      <i data-lucide="trash-2" class="w-5 h-5" style="color:var(--red)"></i>
+    </div>
+    <h3 class="text-lg font-extrabold mb-1.5" style="color:var(--text);font-family:'Oxanium',sans-serif">Delete Assignment?</h3>
+    <p class="text-sm mb-8 leading-relaxed" style="color:var(--text2)">This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closeDeleteModal()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95" style="background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)">Cancel</button>
+      <button onclick="confirmDelete()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95 text-white" style="background:var(--red)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOGOUT MODAL ══ -->
+<div id="logoutModal" class="fixed inset-0 z-[200] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300" style="background:rgba(0,0,0,.35);backdrop-filter:blur(6px)">
+  <div class="modal-sheet w-full max-w-md rounded-t-[2.5rem] p-8 translate-y-full" style="background:var(--surface);border-top:1.5px solid var(--border)">
+    <div class="w-10 h-1.5 rounded-full mx-auto mb-7" style="background:var(--border2)"></div>
+    <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <i data-lucide="log-out" class="w-5 h-5" style="color:var(--text2)"></i>
+    </div>
+    <h3 class="text-lg font-extrabold mb-1.5" style="color:var(--text);font-family:'Oxanium',sans-serif">Sign out?</h3>
+    <p class="text-sm mb-8 leading-relaxed" style="color:var(--text2)">You'll need to sign in again.</p>
+    <div class="flex gap-3">
+      <button onclick="closeLogoutModal()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95" style="background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)">Cancel</button>
+      <button onclick="confirmLogout()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95 text-white" style="background:var(--text)">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DEFAULT FILTER MODAL ══ -->
+<div id="defaultFilterModal" class="fixed inset-0 z-[200] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300" style="background:rgba(0,0,0,.35);backdrop-filter:blur(6px)">
+  <div class="modal-sheet w-full max-w-md rounded-t-[2.5rem] p-8 translate-y-full" style="background:var(--surface);border-top:1.5px solid var(--border)">
+    <div class="w-10 h-1.5 rounded-full mx-auto mb-6" style="background:var(--border2)"></div>
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center" style="background:var(--accent-soft)">
+        <i data-lucide="settings-2" class="w-5 h-5" style="color:var(--accent)"></i>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-base" style="color:var(--text);font-family:'Oxanium',sans-serif">Default Filter</h3>
+        <p class="text-[10px]" style="color:var(--text3)">Auto-applied every time you open the app</p>
+      </div>
+    </div>
+    <div class="rounded-2xl px-4 py-3 mb-5 flex items-start gap-2.5" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 20%,transparent)">
+      <i data-lucide="info" class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style="color:var(--accent)"></i>
+      <p class="text-[10px] leading-relaxed font-medium" style="color:var(--accent)">Applies to both Assignments and Attendance modules.</p>
+    </div>
+    <div class="space-y-3 mb-7">
+      <div>
+        <label class="text-[9px] font-bold tracking-[.14em] uppercase mb-1.5 block" style="color:var(--text3)">Default Year</label>
+        <select id="dfYear" class="fsel field w-full rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+          <option value="">None — show all years</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-[9px] font-bold tracking-[.14em] uppercase mb-1.5 block" style="color:var(--text3)">Default Semester</label>
+        <select id="dfSem" class="fsel field w-full rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+          <option value="">None — show all semesters</option>
+          <option value="1">Semester 1 (First Half)</option>
+          <option value="2">Semester 2 (Second Half)</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeDefaultFilterModal()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95" style="background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)">Cancel</button>
+      <button onclick="saveDefaultFilter()" class="flex-1 py-4 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95 text-white" style="background:var(--accent)">Save Default</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HAJIRA CONFIRM BOX ══ -->
+<div id="hConfirmBox">
+  <div class="h-confirm-modal">
+    <div style="font-size:36px;margin-bottom:12px;line-height:1" id="hConfirmIcon">⚠️</div>
+    <div style="font-size:14px;color:var(--text);margin-bottom:22px;line-height:1.65;white-space:pre-line" id="hConfirmMsg">Are you sure?</div>
+    <div style="display:flex;gap:8px">
+      <button class="h-btn h-btn-ghost" id="hConfirmNo" style="flex:1;justify-content:center">Cancel</button>
+      <button class="h-btn h-btn-r" id="hConfirmYes" style="flex:1;justify-content:center">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HAJIRA COURSE MODAL ══ -->
+<div class="h-overlay" id="hModal">
+  <div class="h-modal">
+    <div class="h-modal-handle"></div>
+    <div class="h-modal-title">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      New Course
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <input type="text" class="h-inp" id="hIName" placeholder="Course Name *">
+      <div style="display:flex;gap:8px">
+        <input type="text" class="h-inp" id="hICode" placeholder="Course Code *" style="flex:1">
+        <input type="text" class="h-inp" id="hISem" placeholder="e.g. Spring 25" style="flex:1">
+      </div>
+      <input type="text" class="h-inp" id="hITeacher" placeholder="Teacher Name *">
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;padding-top:8px;border-top:1px solid var(--border)">Classification</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <span class="h-lbl">Academic Year *</span>
+          <select class="h-sel" id="hIYear">
+            <option value="">Select year</option>
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <span class="h-lbl">Semester *</span>
+          <select class="h-sel" id="hISemNum">
+            <option value="">Select</option>
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <span class="h-lbl">Start Date</span>
+        <input type="date" class="h-inp" id="hIDate">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="h-btn h-btn-ghost" style="flex:1;justify-content:center" onclick="hCloseModal()">Cancel</button>
+      <button class="h-btn h-btn-p" style="flex:1;justify-content:center" onclick="hCreateCourse()">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DRAWER BACKDROP ══ -->
+<div id="drawerBackdrop" class="fixed inset-0 z-[150] opacity-0 pointer-events-none" onclick="closeDrawer()" style="background:rgba(0,0,0,.3);backdrop-filter:blur(4px)"></div>
+
+<!-- ══ PROFILE DRAWER ══ -->
+<div id="profileDrawer" class="fixed top-0 right-0 h-full w-[300px] max-w-[90vw] z-[160] translate-x-full flex flex-col shadow-2xl" style="background:var(--surface);border-left:1.5px solid var(--border)">
+  <div class="relative p-5 pb-7 flex-shrink-0 overflow-hidden" style="background:var(--accent)">
+    <div class="absolute inset-0" style="background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.12) 0%,transparent 60%)"></div>
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-5">
+        <span class="text-[9px] font-bold tracking-[.18em] uppercase text-white opacity-50">Your Profile</span>
+        <button onclick="closeDrawer()" class="w-7 h-7 rounded-xl flex items-center justify-center active:opacity-60" style="background:rgba(255,255,255,.15)">
+          <i data-lucide="x" class="w-3.5 h-3.5 text-white"></i>
+        </button>
+      </div>
+      <img id="drawerAvatar" src="" alt="avatar" class="w-14 h-14 rounded-2xl object-cover mb-3 shadow-xl" style="border:2.5px solid rgba(255,255,255,.35)">
+      <p id="drawerName" class="font-bold text-base leading-tight text-white"></p>
+      <p id="drawerEmail" class="text-[11px] mt-0.5 truncate text-white opacity-55"></p>
+    </div>
+  </div>
+  <div class="flex-1 p-4 space-y-3 overflow-y-auto">
+    <!-- Dark mode -->
+    <div class="rounded-2xl p-4 flex items-center justify-between" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--surface);border:1.5px solid var(--border)">
+          <i id="dmIcon" data-lucide="moon" class="w-4 h-4" style="color:var(--accent)"></i>
+        </div>
+        <div>
+          <p class="text-xs font-bold" style="color:var(--text)">Dark Mode</p>
+          <p class="text-[10px] mt-0.5" style="color:var(--text3)">Switch appearance</p>
+        </div>
+      </div>
+      <div id="dmTrack" onclick="toggleDarkMode()" class="dm-toggle-track flex-shrink-0 ml-2" style="background:var(--border2)">
+        <span id="dmKnob" class="dm-toggle-knob"></span>
+      </div>
+    </div>
+    <!-- Default filter -->
+    <button onclick="openDefaultFilterModal()" class="w-full rounded-2xl p-4 flex items-center gap-3 active:scale-[.98] text-left" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--surface);border:1.5px solid var(--border)">
+        <i data-lucide="settings-2" class="w-4 h-4" style="color:var(--accent)"></i>
+      </div>
+      <div class="flex-1">
+        <p class="text-xs font-bold" style="color:var(--text)">Default Filter</p>
+        <p id="drawerDefaultLabel" class="text-[10px] mt-0.5" style="color:var(--text3)">Not set</p>
+      </div>
+      <i data-lucide="chevron-right" class="w-4 h-4" style="color:var(--text3)"></i>
+    </button>
+    <!-- Assignment stats -->
+    <div class="rounded-2xl p-3.5" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-3" style="color:var(--text3)">Assignments</p>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="layers" class="w-4 h-4 mb-1.5" style="color:var(--accent)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Total</p>
+          <p id="drawerCount" class="text-sm font-extrabold" style="color:var(--text)">0</p>
+        </div>
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="alert-circle" class="w-4 h-4 mb-1.5" style="color:var(--red)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Overdue</p>
+          <p id="drawerOverdue" class="text-sm font-extrabold" style="color:var(--red)">0</p>
+        </div>
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="book-open" class="w-4 h-4 mb-1.5" style="color:var(--blue)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Courses</p>
+          <p id="drawerCourses" class="text-sm font-extrabold" style="color:var(--text)">0</p>
+        </div>
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="clock-4" class="w-4 h-4 mb-1.5" style="color:var(--green)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Due Soon</p>
+          <p id="drawerDueSoon" class="text-sm font-extrabold" style="color:var(--green)">0</p>
+        </div>
+      </div>
+    </div>
+    <!-- Attendance stats -->
+    <div class="rounded-2xl p-3.5" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-3" style="color:var(--text3)">Attendance</p>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="book-marked" class="w-4 h-4 mb-1.5" style="color:var(--accent)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Courses</p>
+          <p id="drawerHCourses" class="text-sm font-extrabold" style="color:var(--text)">0</p>
+        </div>
+        <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border)">
+          <i data-lucide="check-circle" class="w-4 h-4 mb-1.5" style="color:var(--green)"></i>
+          <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Total Classes</p>
+          <p id="drawerHClasses" class="text-sm font-extrabold" style="color:var(--green)">0</p>
+        </div>
+      </div>
+    </div>
+    <!-- Last login + Storage -->
+    <div class="rounded-2xl p-4 flex items-center gap-3" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--surface);border:1.5px solid var(--border)">
+        <i data-lucide="clock" class="w-4 h-4" style="color:var(--accent)"></i>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Last Login</p>
+        <p id="drawerLastLogin" class="text-xs font-semibold" style="color:var(--text)">—</p>
+      </div>
+    </div>
+    <div class="rounded-2xl p-4 flex items-center gap-3" style="background:var(--surface2);border:1.5px solid var(--border)">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--surface);border:1.5px solid var(--border)">
+        <i data-lucide="database" class="w-4 h-4" style="color:var(--accent)"></i>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold tracking-[.14em] uppercase mb-0.5" style="color:var(--text3)">Storage</p>
+        <p class="text-xs font-semibold" style="color:var(--text)">Firebase Firestore</p>
+      </div>
+    </div>
+  </div>
+  <div class="p-4 flex-shrink-0" style="border-top:1.5px solid var(--border)">
+    <button onclick="openLogoutModal()" class="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-bold text-xs tracking-widest uppercase active:scale-95"
+      style="background:var(--red-soft);color:var(--red);border:1.5px solid color-mix(in srgb,var(--red) 20%,transparent)">
+      <i data-lucide="log-out" class="w-4 h-4"></i>Sign Out
+    </button>
+  </div>
+</div>
+
+<!-- ══ LOGIN OVERLAY ══ -->
+<div id="loginOverlay" class="fixed inset-0 z-[120] flex items-center justify-center p-5 login-gradient">
+  <div class="w-full max-w-[320px]">
+    <div class="fu fu1 text-center mb-10">
+      <div class="inline-flex w-[60px] h-[60px] rounded-[20px] items-center justify-center mb-5 shadow-2xl relative" style="background:var(--accent)">
+        <div class="absolute inset-0 rounded-[20px]" style="background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%)"></div>
+        <i data-lucide="bookmark-check" class="w-6 h-6 text-white relative z-10"></i>
+      </div>
+      <h1 class="text-[30px] font-extrabold leading-none tracking-tight" style="font-family:'Oxanium',sans-serif;color:white">
+        Assign<span style="color:var(--accent2)">Manager</span>
+      </h1>
+      <p class="text-[11px] mt-1.5 font-medium" style="color:rgba(255,255,255,.42)">+ Hajira Attendance · Track everything.</p>
+    </div>
+    <div class="fu fu2 rounded-[28px] p-6" style="background:var(--login-card);border:1.5px solid var(--login-border)">
+      <div class="flex items-center justify-between mb-6 cursor-pointer select-none" onclick="toggleRemember()">
+        <div>
+          <p class="text-sm font-bold" style="color:rgba(255,255,255,.88)">Stay signed in</p>
+          <p class="text-[10px] mt-0.5" style="color:rgba(255,255,255,.38)">Remember me for 60 days</p>
+        </div>
+        <div id="rememberTrack" class="relative rounded-full flex-shrink-0 ml-4" style="width:48px;height:26px;background:var(--accent);transition:background .22s ease">
+          <span id="rememberThumb" class="t-knob absolute top-[3px] left-[3px] w-5 h-5 rounded-full shadow-md" style="background:white;transform:translateX(22px)"></span>
+        </div>
+        <input type="checkbox" id="rememberCheck" class="hidden" checked>
+      </div>
+      <div class="h-px mb-6" style="background:var(--login-border)"></div>
+      <button id="loginBtn" onclick="handleGoogleLogin()"
+        class="google-btn w-full flex items-center justify-center gap-3 font-bold py-4 rounded-2xl text-sm active:scale-[.97]"
+        style="background:rgba(255,255,255,.08);color:white;border:1.5px solid rgba(255,255,255,.14)">
+        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        <span id="loginBtnText">Continue with Google</span>
+      </button>
+      <div id="loginError" class="hidden mt-4 rounded-xl px-4 py-3 flex items-start gap-2.5" style="background:var(--red-soft);border:1px solid color-mix(in srgb,var(--red) 25%,transparent)">
+        <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-px" style="color:var(--red)"></i>
+        <p id="loginErrorMsg" class="text-xs font-medium leading-snug" style="color:var(--red)"></p>
+      </div>
+    </div>
+    <p class="fu fu3 text-center text-[10px] mt-5 leading-relaxed" style="color:rgba(255,255,255,.22)">Private &amp; secure · Only you see your data</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════════════════════════ -->
+<div id="appRoot">
+
+  <!-- ── Sticky Header ── -->
+  <div id="stickyHeader" class="sticky top-0 z-[100] transition-shadow duration-300" style="background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(20px)">
+    <div class="max-w-md mx-auto px-5 pt-8 pb-3">
+      <header class="flex justify-between items-center mb-4">
+        <div>
+          <h1 class="text-xl font-extrabold leading-none" style="font-family:'Oxanium',sans-serif;color:var(--text)">
+            Assign<span style="color:var(--accent)">Manager</span>
+          </h1>
+          <div class="flex items-center gap-2 mt-1.5">
+            <span id="syncDot" class="h-1.5 w-1.5 rounded-full" style="background:var(--border2)"></span>
+            <p id="syncLabel" class="text-[9px] font-bold tracking-[.15em] uppercase" style="color:var(--text3)">Connecting…</p>
+          </div>
+        </div>
+        <button onclick="openDrawer()" id="headerAvatarBtn" class="relative flex-shrink-0" style="display:none">
+          <img id="userAvatar" src="" alt="avatar" class="w-11 h-11 rounded-2xl object-cover shadow-md" style="border:2px solid var(--accent)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 pulse-dot" style="background:var(--accent);border-color:var(--bg)"></span>
+        </button>
+        <div id="avatarPlaceholder" class="w-11 h-11 rounded-2xl shimmer"></div>
+      </header>
+
+      <!-- Module Toggle -->
+      <div class="flex justify-center">
+        <div class="module-toggle">
+          <button class="mod-btn active" id="modBtnAttend" onclick="switchModule('attendance')">
+            <span style="display:flex;align-items:center;gap:5px">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              Attendance
+            </span>
+          </button>
+          <button class="mod-btn" id="modBtnAssign" onclick="switchModule('assignments')">
+            <span style="display:flex;align-items:center;gap:5px">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Assignments
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       MODULE: ATTENDANCE (Hajira)
+  ═════════════════════════════════════════════════════ -->
+  <div id="moduleAttendance" class="module-section active max-w-md mx-auto px-5">
+
+    <!-- ── Attendance: Home View ── -->
+    <div id="hVHome">
+      <!-- Stats -->
+      <div class="h-stats-row mt-4">
+        <div class="h-stat-box">
+          <div class="num" id="hSToday">0</div>
+          <div class="lbl">Today</div>
+        </div>
+        <div class="h-stat-box">
+          <div class="num" id="hSWeek">0</div>
+          <div class="lbl">This Week</div>
+        </div>
+        <div class="h-stat-box">
+          <div class="num" id="hSMonth">0</div>
+          <div class="lbl">This Month</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="h-filter-section">
+        <div class="h-filter-title">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+          Filter Courses
+        </div>
+        <div class="h-filter-dropdowns">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="h-lbl">Year</span>
+            <select class="h-filter-select" id="hFYear" onchange="hOnYearChange()">
+              <option value="">All Years</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="h-lbl">Semester</span>
+            <select class="h-filter-select" id="hFSemester" onchange="hOnSemesterChange()" disabled>
+              <option value="">All Semesters</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="h-lbl">Course</span>
+            <select class="h-filter-select" id="hFCourse" onchange="hOnCourseChange()" disabled>
+              <option value="">All Courses</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center;min-height:0" id="hFilterTagsRow"></div>
+      </div>
+
+      <div class="h-sec">Courses</div>
+      <div id="hCourseGrid"></div>
+    </div>
+
+    <!-- ── Attendance: Detail View ── -->
+    <div id="hVDetail" class="hidden">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:16px">
+        <button class="h-back-btn" onclick="hGoHome()">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+      </div>
+      <div id="hDetailHeader" class="h-detail-header"></div>
+      <div class="h-detail-grid">
+        <div class="h-card" style="height:fit-content;display:flex;flex-direction:column;gap:8px">
+          <span class="h-lbl">Date</span>
+          <input type="date" class="h-inp" id="hAttDate">
+          <span class="h-lbl" style="margin-top:2px">Classes This Day</span>
+          <div class="h-counter-wrap">
+            <button class="h-counter-btn" onclick="hChangeCount(-1)">−</button>
+            <div class="h-counter-val" id="hAttCount">1</div>
+            <button class="h-counter-btn" onclick="hChangeCount(1)">+</button>
+          </div>
+          <button class="h-btn h-btn-g" style="width:100%;justify-content:center;margin-top:4px" onclick="hSubmitAtt()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Mark Present
+          </button>
+          <div style="margin-top:6px;background:var(--h-s2);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--h-b)">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--h-a);line-height:1" id="hDsTotalNum">0</div>
+            <div style="font-size:10px;color:var(--h-t3);text-transform:uppercase;letter-spacing:1.2px;margin-top:4px;font-weight:600">Total Classes</div>
+          </div>
+        </div>
+        <div class="h-card" style="padding:0;overflow:hidden">
+          <div style="background:var(--h-s2);padding:10px 14px;border-bottom:1px solid var(--h-b)">
+            <span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--h-t3);text-transform:uppercase;letter-spacing:1.2px;font-weight:600">Attendance History</span>
+          </div>
+          <div class="h-att-list-wrap">
+            <table class="h-att-table">
+              <thead><tr><th>Date</th><th>Classes</th><th>Status</th><th></th></tr></thead>
+              <tbody id="hAttBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Attendance: Report View ── -->
+    <div id="hVReport" class="hidden mt-4">
+      <div class="h-sec" style="margin-top:4px">Overview</div>
+      <div class="h-report-stats">
+        <div class="h-rs-box"><div class="h-rs-num" id="hRToday">0</div><div class="h-rs-lbl">Today</div></div>
+        <div class="h-rs-box"><div class="h-rs-num" id="hRWeek">0</div><div class="h-rs-lbl">Week</div></div>
+        <div class="h-rs-box"><div class="h-rs-num" id="hRMonth">0</div><div class="h-rs-lbl">Month</div></div>
+        <div class="h-rs-box"><div class="h-rs-num" id="hRYear">0</div><div class="h-rs-lbl">Year</div></div>
+      </div>
+      <div class="h-filter-bar">
+        <select id="hFCourseR" onchange="hRenderReport()"><option value="">All Courses</option></select>
+        <input type="date" id="hFFrom" onchange="hRenderReport()">
+        <input type="date" id="hFTo" onchange="hRenderReport()">
+        <button class="h-btn h-btn-ghost h-btn-sm" onclick="hClearReportFilter()">Reset</button>
+      </div>
+      <div class="h-chart-wrap">
+        <div class="h-chart-title">Monthly Classes (This Year)</div>
+        <div style="position:relative;height:200px"><canvas id="hChartMonthly"></canvas></div>
+      </div>
+      <div class="h-chart-wrap">
+        <div class="h-chart-title">Weekly Classes (Last 8 Weeks)</div>
+        <div style="position:relative;height:200px"><canvas id="hChartWeekly"></canvas></div>
+      </div>
+      <div class="h-sec">By Course</div>
+      <div id="hCourseReportList"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       MODULE: ASSIGNMENTS (AssignManager)
+  ═════════════════════════════════════════════════════ -->
+  <div id="moduleAssignments" class="module-section max-w-md mx-auto px-5">
+
+    <!-- Search -->
+    <div id="searchBar" class="mb-3 mt-4">
+      <div class="relative">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style="color:var(--text3)"></i>
+        <input type="text" id="searchInput" oninput="debounceSearch()"
+          placeholder="Search course, topic, code or instructor…"
+          class="field w-full rounded-2xl pl-11 pr-11 py-3.5 text-sm outline-none font-medium"
+          style="background:var(--surface);border:1.5px solid var(--border);color:var(--text)">
+        <button id="searchClearBtn" onclick="clearSearch()" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg items-center justify-center hidden active:scale-90" style="background:var(--surface2)">
+          <i data-lucide="x" class="w-3 h-3" style="color:var(--text3)"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div id="filterBar" class="mb-2">
+      <div class="grid grid-cols-3 gap-2 mb-2">
+        <select id="fYear" onchange="onYearChange()" class="fsel field w-full rounded-xl px-3 py-3 text-[11px] font-bold outline-none" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text)">
+          <option value="">All Years</option>
+          <option value="1">Year 1</option>
+          <option value="2">Year 2</option>
+          <option value="3">Year 3</option>
+          <option value="4">Year 4</option>
+        </select>
+        <select id="fSem" onchange="onSemChange()" class="fsel field w-full rounded-xl px-3 py-3 text-[11px] font-bold outline-none" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text)">
+          <option value="">All Sem</option>
+          <option value="1">Sem 1</option>
+          <option value="2">Sem 2</option>
+        </select>
+        <select id="fCourse" onchange="onCourseChange()" class="fsel field w-full rounded-xl px-3 py-3 text-[11px] font-bold outline-none" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text)">
+          <option value="">All Courses</option>
+        </select>
+      </div>
+
+      <!-- Sort pills -->
+      <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1" style="scrollbar-width:none">
+        <span class="text-[9px] font-bold tracking-widest uppercase flex-shrink-0" style="color:var(--text3)">Sort:</span>
+        <button onclick="setSort('dueAsc')"  id="sortDueAsc"  class="sort-pill active flex-shrink-0">Due ↑</button>
+        <button onclick="setSort('dueDsc')"  id="sortDueDsc"  class="sort-pill flex-shrink-0">Due ↓</button>
+        <button onclick="setSort('nameAsc')" id="sortNameAsc" class="sort-pill flex-shrink-0">A→Z</button>
+        <button onclick="setSort('recent')"  id="sortRecent"  class="sort-pill flex-shrink-0">Recent</button>
+        <span class="mx-1 flex-shrink-0" style="color:var(--border2)">|</span>
+        <button onclick="toggleGroupByCourse()" id="groupBtn" class="sort-pill flex-shrink-0 flex items-center gap-1">
+          <i data-lucide="layers" class="w-3 h-3"></i>Group
+        </button>
+      </div>
+
+      <!-- Filter chips -->
+      <div id="filterChipsRow" class="collapsed">
+        <div class="flex items-center gap-2 flex-wrap pb-2.5">
+          <div id="filterChips" class="flex items-center gap-1.5 flex-wrap flex-1"></div>
+          <button onclick="clearFilters()" class="text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-xl active:scale-95 flex items-center gap-1"
+            style="background:var(--red-soft);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 20%,transparent)">
+            <i data-lucide="x" class="w-2.5 h-2.5"></i>Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter summary -->
+      <div id="filterSummaryBar" class="hidden-bar">
+        <div class="flex items-center justify-between rounded-2xl px-4 py-3 mb-3"
+          style="background:var(--accent-soft);border:1.5px solid color-mix(in srgb,var(--accent) 18%,transparent)">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="filter" class="w-3.5 h-3.5 flex-shrink-0" style="color:var(--accent)"></i>
+            <p id="filterSummaryText" class="text-[11px] font-bold" style="color:var(--accent)"></p>
+          </div>
+          <span id="filterSummaryCount" class="count-badge" style="background:var(--accent);color:white"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Section -->
+    <div id="viewSection">
+      <div id="shimmerLoad" class="space-y-3.5">
+        <div class="h-56 w-full shimmer rounded-2xl"></div>
+        <div class="h-56 w-full shimmer rounded-2xl opacity-55"></div>
+        <div class="h-44 w-full shimmer rounded-2xl opacity-25"></div>
+      </div>
+      <div id="taskList" class="hidden space-y-3.5"></div>
+      <div id="emptyState" class="hidden text-center py-24">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style="background:var(--surface2);border:1.5px solid var(--border)">
+          <i data-lucide="inbox" class="w-6 h-6" style="color:var(--border2)"></i>
+        </div>
+        <p class="text-xs font-bold tracking-[.15em] uppercase mb-2" style="color:var(--text3)">No Assignments Yet</p>
+        <p class="text-xs" style="color:var(--border2)">Tap + below to add your first one</p>
+      </div>
+      <div id="filterEmptyState" class="hidden text-center py-20">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 wobble" style="background:var(--accent-soft)">
+          <i data-lucide="filter-x" class="w-6 h-6" style="color:var(--accent)"></i>
+        </div>
+        <p class="text-sm font-extrabold mb-2" style="color:var(--text);font-family:'Oxanium',sans-serif">No Assignments Found</p>
+        <p id="filterEmptyMsg" class="text-xs mb-6 leading-relaxed" style="color:var(--text3)">No assignments match your current filters.</p>
+        <button onclick="clearFilters()" class="text-white text-xs font-bold px-5 py-2.5 rounded-2xl tracking-widest uppercase active:scale-95" style="background:var(--accent)">Clear All Filters</button>
+      </div>
+      <div id="errorState" class="hidden text-center py-20">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style="background:var(--red-soft)">
+          <i data-lucide="wifi-off" class="w-6 h-6" style="color:var(--red)"></i>
+        </div>
+        <p class="text-sm font-extrabold mb-1.5" style="color:var(--text);font-family:'Oxanium',sans-serif">Failed to load</p>
+        <p id="errorMsg" class="text-xs mb-6" style="color:var(--text2)">Check connection and retry.</p>
+        <button onclick="retryLoad()" class="text-white text-xs font-bold px-7 py-3 rounded-2xl tracking-widest uppercase active:scale-95" style="background:var(--accent)">Retry</button>
+      </div>
+    </div>
+
+    <!-- Add Section -->
+    <div id="addSection" class="hidden mt-2">
+      <div class="p-6 rounded-3xl" style="background:var(--surface);border:1.5px solid var(--border)">
+        <div class="flex items-center gap-2.5 mb-6">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--accent-soft)">
+            <i data-lucide="plus" class="w-4 h-4" style="color:var(--accent)"></i>
+          </div>
+          <h2 class="text-sm font-extrabold" style="color:var(--text);font-family:'Oxanium',sans-serif">New Assignment</h2>
+        </div>
+        <div id="autofillHint" class="hidden rounded-2xl px-4 py-3 mb-4 flex items-center gap-2.5" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 20%,transparent)">
+          <i data-lucide="wand-2" class="w-3.5 h-3.5 flex-shrink-0" style="color:var(--accent)"></i>
+          <p id="autofillText" class="text-[10px] font-semibold leading-snug" style="color:var(--accent)"></p>
+        </div>
+        <div class="space-y-3">
+          <input id="courseName" type="text" placeholder="Course Name *"
+            class="field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-medium"
+            style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+          <div class="grid grid-cols-2 gap-2.5">
+            <input id="courseCode" type="text" placeholder="Course Code"
+              class="field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-medium"
+              style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+            <input id="date" type="date" required
+              class="field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-medium"
+              style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="text-[9px] font-bold tracking-widest uppercase px-1 mb-1.5 block" style="color:var(--text3)">Academic Year</label>
+              <select id="addYear" class="fsel field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-semibold"
+                style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+                <option value="">Select Year</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-bold tracking-widest uppercase px-1 mb-1.5 block" style="color:var(--text3)">Semester</label>
+              <select id="addSem" class="fsel field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-semibold"
+                style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+                <option value="">Select Sem</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+              </select>
+            </div>
+          </div>
+          <input id="teacher" type="text" placeholder="Instructor Name"
+            class="field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-medium"
+            style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">
+          <textarea id="topic" placeholder="Assignment details, topic or notes…" rows="3"
+            class="field w-full rounded-2xl px-4 py-3.5 outline-none text-sm font-medium resize-none"
+            style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text)"></textarea>
+        </div>
+        <div id="formError" class="hidden mt-4 rounded-2xl px-4 py-3.5 flex items-center gap-2.5" style="background:var(--red-soft);border:1px solid color-mix(in srgb,var(--red) 22%,transparent)">
+          <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0" style="color:var(--red)"></i>
+          <p id="formErrorMsg" class="text-xs font-semibold" style="color:var(--red)"></p>
+        </div>
+        <button id="saveBtn" onclick="saveTask()"
+          class="w-full mt-5 text-white font-bold py-4 rounded-2xl active:scale-[.98] flex items-center justify-center gap-2.5 text-xs tracking-widest uppercase disabled:opacity-40 shadow-lg"
+          style="background:var(--accent)">
+          Save Assignment
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Nav ── -->
+  <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-auto glass-nav rounded-[22px] py-3.5 px-6 flex justify-around items-center gap-6 z-[90] shadow-2xl" id="bottomNav">
+    <!-- Attendance nav -->
+    <div id="navAttend" class="flex items-center gap-5">
+      <button onclick="hShowView('home')" id="navHHome" class="nav-btn active flex flex-col items-center gap-1 py-0.5 px-2" style="color:var(--accent)">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold tracking-widest uppercase">Courses</span>
+      </button>
+      <div class="w-px h-6" style="background:var(--border)"></div>
+      <button onclick="hShowView('report')" id="navHReport" class="nav-btn flex flex-col items-center gap-1 py-0.5 px-2" style="color:var(--text3)">
+        <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold tracking-widest uppercase">Report</span>
+      </button>
+      <div class="w-px h-6" style="background:var(--border)"></div>
+      <button onclick="hOpenModal()" class="nav-btn flex flex-col items-center gap-1 py-0.5 px-2" style="color:var(--text3)">
+        <i data-lucide="plus-square" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold tracking-widest uppercase">Add</span>
+      </button>
+    </div>
+    <!-- Assignment nav -->
+    <div id="navAssign" class="hidden items-center gap-5">
+      <button onclick="switchTab('view')" id="navView" class="nav-btn active flex flex-col items-center gap-1 py-0.5 px-2" style="color:var(--accent)">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold tracking-widest uppercase">View</span>
+      </button>
+      <div class="w-px h-6" style="background:var(--border)"></div>
+      <button onclick="switchTab('add')" id="navAdd" class="nav-btn flex flex-col items-center gap-1 py-0.5 px-2" style="color:var(--text3)">
+        <i data-lucide="plus-square" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold tracking-widest uppercase">Add</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     FIREBASE + LOGIC
+════════════════════════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+  onAuthStateChanged, setPersistence,
+  browserLocalPersistence, browserSessionPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, getDocs, deleteDoc,
+  doc, query, orderBy, serverTimestamp, setDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── Firebase init (AssignManager project) ──
+const app = initializeApp({
+  apiKey:"AIzaSyCYBzykgKTEv1dmDcIae4A07S6Mh5PQraA",
+  authDomain:"assignment-manager-a22f9.firebaseapp.com",
+  projectId:"assignment-manager-a22f9",
+  storageBucket:"assignment-manager-a22f9.firebasestorage.app",
+  messagingSenderId:"428183991681",
+  appId:"1:428183991681:web:827ff28aef9fbf0ac72480"
+});
+const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
+
+// ════════════════════════════════════════════════════════════════
+//  SHARED STATE
+// ════════════════════════════════════════════════════════════════
+let currentUser   = null;
+let userDefaults  = { year:'', sem:'' };
+
+// ── Assignment state ──
+let assignments   = [];
+let currentDelId  = null;
+let activeYear    = '';
+let activeSem     = '';
+let activeCourse  = '';
+let activeSearch  = '';
+let activeSort    = 'dueAsc';
+let groupByCourse = false;
+let collapsedGroups = {};
+let searchTimer   = null;
+
+// ── Hajira (Attendance) state ──
+let hCourses      = [];
+let hCurId        = null;
+let hAttCountVal  = 1;
+let hCharts       = {};
+let hHomeFilters  = { year:'', semester:'', courseCode:'' };
+
+// ── Current module ──
+let currentModule = 'attendance'; // default
+
+// ════════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════════
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    hideLoginOverlay();
+    populateHeader(user);
+    await loadUserDefaults();
+    await loadAssignments();
+    await hLoadCourses();
+    applyDefaultFilters();
+    hApplyProfileDefaults();
+    hRenderHome();
+  } else {
+    currentUser = null;
+    assignments = [];
+    hCourses = [];
+    showLoginOverlay();
+    resetSync(false);
+  }
+});
+
+window.handleGoogleLogin = async () => {
+  const btn    = document.getElementById('loginBtn');
+  const btnTxt = document.getElementById('loginBtnText');
+  const errBox = document.getElementById('loginError');
+  errBox.classList.add('hidden');
+  btnTxt.innerHTML = `<span class="spinner w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block"></span>&nbsp;Signing in…`;
+  btn.disabled = true;
+  try {
+    const persist = document.getElementById('rememberCheck').checked
+      ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persist);
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    let msg = "Login failed. Please try again.";
+    if (e.code === 'auth/popup-closed-by-user')        msg = "Popup closed — please try again.";
+    else if (e.code === 'auth/popup-blocked')           msg = "Popup blocked. Allow popups for this site.";
+    else if (e.code === 'auth/network-request-failed')  msg = "No internet. Check your connection.";
+    else if (e.code === 'auth/cancelled-popup-request') msg = "Another popup is open — close it first.";
+    document.getElementById('loginErrorMsg').textContent = msg;
+    errBox.classList.remove('hidden');
+    lucide.createIcons();
+  } finally {
+    btnTxt.textContent = "Continue with Google";
+    btn.disabled = false;
+  }
+};
+
+window.confirmLogout = async () => {
+  closeLogoutModal(); closeDrawer();
+  try { await signOut(auth); assignments = []; hCourses = []; }
+  catch { showToast("Sign-out failed", "error"); }
+};
+
+// ════════════════════════════════════════════════════════════════
+//  USER PREFERENCES
+// ════════════════════════════════════════════════════════════════
+async function loadUserDefaults() {
+  try {
+    const snap = await getDoc(doc(db, "users", currentUser.uid, "profile", "prefs"));
+    if (snap.exists()) {
+      userDefaults = {
+        year: snap.data().defaultYear     || '',
+        sem:  snap.data().defaultSemester || ''
+      };
+    }
+  } catch {}
+  syncDrawerDefaultLabel();
+}
+
+window.saveDefaultFilter = async () => {
+  const yr  = document.getElementById('dfYear').value;
+  const sem = document.getElementById('dfSem').value;
+  try {
+    await setDoc(
+      doc(db, "users", currentUser.uid, "profile", "prefs"),
+      { defaultYear: yr, defaultSemester: sem },
+      { merge: true }
+    );
+    userDefaults = { year: yr, sem };
+    syncDrawerDefaultLabel();
+    closeDefaultFilterModal();
+    showToast("Default filter saved ✓", "success");
+  } catch {
+    showToast("Save failed — check connection", "error");
+  }
+};
+
+function syncDrawerDefaultLabel() {
+  const lbl = document.getElementById('drawerDefaultLabel');
+  if (!lbl) return;
+  const p = [];
+  if (userDefaults.year) p.push(`Year ${userDefaults.year}`);
+  if (userDefaults.sem)  p.push(`Sem ${userDefaults.sem}`);
+  lbl.textContent = p.length ? p.join(' · ') : 'Not set';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MODULE SWITCH
+// ════════════════════════════════════════════════════════════════
+window.switchModule = (mod) => {
+  currentModule = mod;
+  document.getElementById('moduleAttendance').classList.toggle('active', mod === 'attendance');
+  document.getElementById('moduleAssignments').classList.toggle('active', mod === 'assignments');
+  document.getElementById('modBtnAttend').classList.toggle('active', mod === 'attendance');
+  document.getElementById('modBtnAssign').classList.toggle('active', mod === 'assignments');
+  document.getElementById('navAttend').classList.toggle('hidden', mod !== 'attendance');
+  document.getElementById('navAttend').classList.toggle('flex', mod === 'attendance');
+  document.getElementById('navAssign').classList.toggle('hidden', mod !== 'assignments');
+  document.getElementById('navAssign').classList.toggle('flex', mod === 'assignments');
+  if (mod === 'assignments') {
+    applyFilters();
+    switchTab('view');
+  }
+  if (mod === 'attendance') {
+    hRenderHome();
+  }
+  lucide.createIcons();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  ASSIGNMENT: LOAD
+// ════════════════════════════════════════════════════════════════
+function applyDefaultFilters() {
+  if (userDefaults.year) { document.getElementById('fYear').value = userDefaults.year; activeYear = userDefaults.year; }
+  if (userDefaults.sem)  { document.getElementById('fSem').value  = userDefaults.sem;  activeSem  = userDefaults.sem;  }
+  if (userDefaults.year || userDefaults.sem) {
+    rebuildCourseDropdown();
+    applyFilters();
+    if (userDefaults.year) document.getElementById('fYear').classList.add('cascade-active');
+    if (userDefaults.sem)  document.getElementById('fSem').classList.add('cascade-active');
+  }
+}
+
+async function loadAssignments() {
+  setShimmer(true); hideErrorState();
+  try {
+    const ref  = collection(db, "users", currentUser.uid, "assignments");
+    const snap = await getDocs(query(ref, orderBy("createdAt", "desc")));
+    assignments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    rebuildCourseDropdown();
+    applyFilters();
+    resetSync(true);
+    updStats();
+  } catch(e) {
+    showErrorState(getFriendlyError(e));
+    resetSync(false);
+  } finally {
+    setShimmer(false);
+  }
+}
+window.retryLoad = loadAssignments;
+
+// ════════════════════════════════════════════════════════════════
+//  ASSIGNMENT: SAVE
+// ════════════════════════════════════════════════════════════════
+window.saveTask = async () => {
+  const nameEl = document.getElementById('courseName');
+  const dateEl = document.getElementById('date');
+  const fErr   = document.getElementById('formError');
+  const fMsg   = document.getElementById('formErrorMsg');
+  fErr.classList.add('hidden');
+  const name   = nameEl.value.trim();
+  const code   = document.getElementById('courseCode').value.trim();
+  const teach  = document.getElementById('teacher').value.trim();
+  const topicV = document.getElementById('topic').value.trim();
+  const date   = dateEl.value;
+  const yearV  = document.getElementById('addYear').value;
+  const semV   = document.getElementById('addSem').value;
+  if (!name) { shake(nameEl, "Course name is required.", fErr, fMsg); return; }
+  if (!date) { shake(dateEl, "Due date is required.", fErr, fMsg); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block"></span>&nbsp;Saving…`;
+  try {
+    const ref    = collection(db, "users", currentUser.uid, "assignments");
+    const record = {
+      name, code: code||'N/A', teacher: teach||'TBA',
+      topic: topicV||'No details provided', date,
+      year: yearV||null, semester: semV||null,
+      createdAt: serverTimestamp()
+    };
+    const docRef = await addDoc(ref, record);
+    assignments.unshift({ id: docRef.id, ...record });
+    ['courseName','courseCode','teacher','topic','date'].forEach(id => document.getElementById(id).value = '');
+    if (!activeYear) document.getElementById('addYear').value = '';
+    if (!activeSem)  document.getElementById('addSem').value  = '';
+    fErr.classList.add('hidden');
+    rebuildCourseDropdown();
+    showToast("Assignment saved ✓", "success");
+    switchTab('view');
+    updStats();
+  } catch(e) {
+    fMsg.textContent = getFriendlyError(e);
+    fErr.classList.remove('hidden');
+    lucide.createIcons();
+    showToast("Save failed", "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Save Assignment <i data-lucide="check-circle-2" class="w-4 h-4"></i>`;
+    lucide.createIcons();
+  }
+};
+
+function shake(el, msg, fErr, fMsg) {
+  el.classList.add('shake'); el.style.borderColor = 'var(--red)';
+  fMsg.textContent = msg; fErr.classList.remove('hidden'); lucide.createIcons();
+  setTimeout(() => { el.classList.remove('shake'); el.style.borderColor = 'var(--border)'; }, 400);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ASSIGNMENT: DELETE
+// ════════════════════════════════════════════════════════════════
+window.openModal        = (id) => { currentDelId = id; openBS('deleteModal'); };
+window.closeDeleteModal = ()   => closeBS('deleteModal');
+window.confirmDelete    = async () => {
+  if (!currentDelId) return;
+  try {
+    await deleteDoc(doc(db, "users", currentUser.uid, "assignments", currentDelId));
+    assignments = assignments.filter(a => a.id !== currentDelId);
+    closeDeleteModal(); rebuildCourseDropdown(); applyFilters();
+    showToast("Deleted", "success"); updStats();
+  } catch(e) { closeDeleteModal(); showToast(getFriendlyError(e), "error"); }
+};
+
+// ════════════════════════════════════════════════════════════════
+//  ASSIGNMENT: FILTER ENGINE
+// ════════════════════════════════════════════════════════════════
+window.onYearChange = () => {
+  activeYear = document.getElementById('fYear').value;
+  activeSem = ''; activeCourse = '';
+  document.getElementById('fSem').value = ''; document.getElementById('fCourse').value = '';
+  updateCascadeStyles(); rebuildCourseDropdown(); applyFilters();
+};
+window.onSemChange = () => {
+  activeSem = document.getElementById('fSem').value;
+  activeYear = document.getElementById('fYear').value;
+  activeCourse = ''; document.getElementById('fCourse').value = '';
+  updateCascadeStyles(); rebuildCourseDropdown(); applyFilters();
+};
+window.onCourseChange = () => {
+  activeCourse = document.getElementById('fCourse').value;
+  updateCascadeStyles(); applyFilters();
+};
+function updateCascadeStyles() {
+  document.getElementById('fYear').classList.toggle('cascade-active', !!activeYear);
+  document.getElementById('fSem').classList.toggle('cascade-active', !!activeSem);
+  document.getElementById('fCourse').classList.toggle('cascade-active', !!activeCourse);
+}
+function rebuildCourseDropdown() {
+  const pool = assignments.filter(a => {
+    const ym = !activeYear || String(a.year||'') === activeYear;
+    const sm = !activeSem  || String(a.semester||'') === activeSem;
+    return ym && sm;
+  });
+  const codes = [...new Set(pool.map(a=>a.code).filter(c=>c&&c!=='N/A'))].sort();
+  const sel  = document.getElementById('fCourse');
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">All Courses</option>` +
+    codes.map(c=>`<option value="${c}"${c===prev?' selected':''}>${c}</option>`).join('');
+  if (prev && !codes.includes(prev)) { sel.value=''; activeCourse=''; }
+}
+window.applyFilters = () => {
+  activeYear   = document.getElementById('fYear').value;
+  activeSem    = document.getElementById('fSem').value;
+  activeCourse = document.getElementById('fCourse').value;
+  activeSearch = document.getElementById('searchInput').value.toLowerCase().trim();
+  let result = assignments.filter(a => {
+    if (activeYear   && String(a.year    ||'') !== activeYear)   return false;
+    if (activeSem    && String(a.semester||'') !== activeSem)    return false;
+    if (activeCourse && (a.code||'')           !== activeCourse) return false;
+    if (activeSearch) { const hay=`${a.name} ${a.topic} ${a.code} ${a.teacher}`.toLowerCase(); if(!hay.includes(activeSearch)) return false; }
+    return true;
+  });
+  result = sortAssignments(result, activeSort);
+  renderTasks(result); updateChips(); updateFilterSummary(result.length); updateSearchClearBtn();
+};
+window.filterTasks = window.applyFilters;
+
+function sortAssignments(arr, mode) {
+  return [...arr].sort((a,b) => {
+    if (mode==='dueAsc')  { const da=a.date?new Date(a.date):new Date('9999'); const db2=b.date?new Date(b.date):new Date('9999'); return da-db2; }
+    if (mode==='dueDsc')  { const da=a.date?new Date(a.date):new Date('0'); const db2=b.date?new Date(b.date):new Date('0'); return db2-da; }
+    if (mode==='nameAsc') return (a.name||'').localeCompare(b.name||'');
+    if (mode==='recent')  { const ta=a.createdAt?.seconds||0; const tb=b.createdAt?.seconds||0; return tb-ta; }
+    return 0;
+  });
+}
+window.setSort = (mode) => {
+  activeSort = mode;
+  document.querySelectorAll('.sort-pill').forEach(p => {
+    const map={sortDueAsc:'dueAsc',sortDueDsc:'dueDsc',sortNameAsc:'nameAsc',sortRecent:'recent'};
+    if(map[p.id]) p.classList.toggle('active', map[p.id]===mode);
+  });
+  applyFilters();
+};
+window.toggleGroupByCourse = () => {
+  groupByCourse = !groupByCourse;
+  document.getElementById('groupBtn').classList.toggle('active', groupByCourse);
+  applyFilters();
+};
+window.clearFilters = () => {
+  activeYear=activeSem=activeCourse=activeSearch='';
+  document.getElementById('fYear').value=''; document.getElementById('fSem').value='';
+  document.getElementById('fCourse').value=''; document.getElementById('searchInput').value='';
+  updateCascadeStyles(); rebuildCourseDropdown(); applyFilters();
+};
+window.removeChip = (key) => {
+  if(key==='year')   { document.getElementById('fYear').value=''; activeYear=''; activeSem=''; activeCourse=''; document.getElementById('fSem').value=''; document.getElementById('fCourse').value=''; rebuildCourseDropdown(); }
+  if(key==='sem')    { document.getElementById('fSem').value=''; activeSem=''; activeCourse=''; document.getElementById('fCourse').value=''; rebuildCourseDropdown(); }
+  if(key==='course') { document.getElementById('fCourse').value=''; activeCourse=''; }
+  if(key==='search') { document.getElementById('searchInput').value=''; activeSearch=''; }
+  updateCascadeStyles(); applyFilters();
+};
+function updateChips() {
+  const hasF = activeYear||activeSem||activeCourse||activeSearch;
+  const row  = document.getElementById('filterChipsRow');
+  const cont = document.getElementById('filterChips');
+  if(!hasF){ row.classList.remove('expanded'); row.classList.add('collapsed'); cont.innerHTML=''; return; }
+  row.classList.remove('collapsed'); row.classList.add('expanded');
+  const chips=[];
+  if(activeYear)   chips.push({label:yrLabel(activeYear),key:'year'});
+  if(activeSem)    chips.push({label:`Sem ${activeSem}`,key:'sem'});
+  if(activeCourse) chips.push({label:activeCourse,key:'course'});
+  if(activeSearch) chips.push({label:`"${activeSearch}"`,key:'search'});
+  cont.innerHTML=chips.map(c=>`<span class="fchip">${sanitize(c.label)}<em class="fchip-x" onclick="removeChip('${c.key}')">×</em></span>`).join('');
+}
+function updateFilterSummary(count) {
+  const bar=document.getElementById('filterSummaryBar');
+  const txtEl=document.getElementById('filterSummaryText');
+  const cntEl=document.getElementById('filterSummaryCount');
+  const hasF=activeYear||activeSem||activeCourse||activeSearch;
+  if(!hasF||!assignments.length){ bar.classList.add('hidden-bar'); bar.classList.remove('visible-bar'); return; }
+  bar.classList.remove('hidden-bar'); bar.classList.add('visible-bar');
+  const parts=[];
+  if(activeYear)   parts.push(yrLabel(activeYear));
+  if(activeSem)    parts.push(`Semester ${activeSem}`);
+  if(activeCourse) parts.push(activeCourse);
+  if(activeSearch) parts.push(`"${activeSearch}"`);
+  txtEl.textContent=parts.join(' · '); cntEl.textContent=count;
+}
+window.debounceSearch = () => { clearTimeout(searchTimer); searchTimer=setTimeout(applyFilters,220); };
+window.clearSearch = () => { document.getElementById('searchInput').value=''; activeSearch=''; updateSearchClearBtn(); applyFilters(); };
+function updateSearchClearBtn() {
+  const btn=document.getElementById('searchClearBtn');
+  if(activeSearch){ btn.classList.remove('hidden'); btn.classList.add('flex'); }
+  else { btn.classList.add('hidden'); btn.classList.remove('flex'); }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ASSIGNMENT: RENDER
+// ════════════════════════════════════════════════════════════════
+window.renderTasks = (data) => {
+  const list   = document.getElementById('taskList');
+  const empty  = document.getElementById('emptyState');
+  const fempty = document.getElementById('filterEmptyState');
+  const fmsg   = document.getElementById('filterEmptyMsg');
+  fempty.classList.add('hidden'); empty.classList.add('hidden'); list.classList.remove('hidden');
+  const hasF = activeYear||activeSem||activeCourse||activeSearch;
+  if(!data.length) {
+    list.innerHTML='';
+    if(hasF) {
+      const parts=[];
+      if(activeYear) parts.push(yrLabel(activeYear)); if(activeSem) parts.push(`Semester ${activeSem}`);
+      if(activeCourse) parts.push(activeCourse); if(activeSearch) parts.push(`"${activeSearch}"`);
+      fmsg.textContent=parts.length?`No assignments found for ${parts.join(' · ')}.`:'No assignments match your current filters.';
+      fempty.classList.remove('hidden');
+    } else { empty.classList.remove('hidden'); }
+    return;
+  }
+  if(groupByCourse) { list.innerHTML=renderGrouped(data); }
+  else { list.innerHTML=data.map((item,idx)=>renderCard(item,idx)).join(''); }
+  lucide.createIcons(); initGroupToggles();
+};
+
+function renderGrouped(data) {
+  const groups={};
+  data.forEach(a=>{ const key=(a.code&&a.code!=='N/A')?a.code:'Uncategorised'; if(!groups[key])groups[key]=[]; groups[key].push(a); });
+  return Object.entries(groups).map(([code,items])=>{
+    const isOpen=!collapsedGroups[code];
+    const overdueCnt=items.filter(a=>getDueDays(a.date)!==null&&getDueDays(a.date)<0).length;
+    const soonCnt=items.filter(a=>{const d=getDueDays(a.date);return d!==null&&d>=0&&d<=3;}).length;
+    return `<div class="course-group mb-4" data-group="${sanitize(code)}">
+      <div class="course-group-header ${isOpen?'':'group-collapsed'}" onclick="toggleGroup('${sanitize(code)}')">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--accent-soft)">
+          <i data-lucide="book-open" class="w-4 h-4" style="color:var(--accent)"></i>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-extrabold" style="color:var(--text);font-family:'Oxanium',sans-serif">${sanitize(code)}</span>
+            ${overdueCnt?`<span class="stats-pill overdue-blink" style="background:var(--red-soft);color:var(--red)">${overdueCnt} overdue</span>`:''}
+            ${soonCnt?`<span class="stats-pill" style="background:var(--amber-soft);color:var(--amber)">${soonCnt} due soon</span>`:''}
+          </div>
+          <p class="text-[9px] mt-0.5 font-semibold" style="color:var(--text3)">${items.length} assignment${items.length!==1?'s':''}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="count-badge" style="background:var(--accent-soft);color:var(--accent)">${items.length}</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 group-toggle-icon flex-shrink-0" style="color:var(--text3)"></i>
+        </div>
+      </div>
+      <div class="group-body space-y-3 pl-0" style="max-height:${isOpen?'9999px':'0'};" data-group-body="${sanitize(code)}">
+        ${items.map((item,idx)=>renderCard(item,idx)).join('')}
+        <div style="height:4px"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.toggleGroup = (code) => {
+  collapsedGroups[code]=!collapsedGroups[code];
+  const body=document.querySelector(`[data-group-body="${CSS.escape(code)}"]`);
+  const header=document.querySelector(`[data-group="${CSS.escape(code)}"] .course-group-header`);
+  if(!body||!header) return;
+  const isOpen=!collapsedGroups[code];
+  body.style.maxHeight=isOpen?`${body.scrollHeight+200}px`:'0';
+  header.classList.toggle('group-collapsed',!isOpen);
+};
+function initGroupToggles() {
+  setTimeout(()=>{
+    document.querySelectorAll('[data-group-body]').forEach(body=>{
+      const code=body.dataset.groupBody; const isOpen=!collapsedGroups[code];
+      if(isOpen) body.style.maxHeight=`${body.scrollHeight+200}px`;
+    });
+  },100);
+}
+
+function renderCard(item, idx) {
+  const days=getDueDays(item.date);
+  const [bb,bc,bd]=
+      days!==null&&days<0  ?['var(--red-soft)','var(--red)','var(--red)']
+    : days!==null&&days===0?['var(--red-soft)','var(--red)','var(--red)']
+    : days!==null&&days<=3 ?['var(--amber-soft)','var(--amber)','var(--amber)']
+    : days!==null&&days<=7 ?['var(--blue-soft)','var(--blue)','var(--blue)']
+    :                       ['var(--accent-soft)','var(--accent)','var(--accent)'];
+  const dueLabel=
+      days===null ?''
+    : days<0      ?`<span class="font-bold overdue-blink" style="color:var(--red)">Overdue ${Math.abs(days)}d</span>`
+    : days===0    ?`<span class="font-bold overdue-blink" style="color:var(--red)">Due Today!</span>`
+    : days===1    ?`<span class="font-bold" style="color:var(--amber)">Tomorrow</span>`
+    : days<=3     ?`<span class="font-bold" style="color:var(--amber)">${days}d left</span>`
+    :              `<span style="color:var(--text3)">${days}d left</span>`;
+  const ysTag=(item.year||item.semester)
+    ?`<span class="text-[9px] font-bold px-2.5 py-1 rounded-xl" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border)">${item.year?`Y${item.year}`:''}${item.year&&item.semester?'·':''}${item.semester?`S${item.semester}`:''}</span>`
+    :`<span class="text-[9px] font-bold px-2.5 py-1 rounded-xl" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);opacity:.45">Legacy</span>`;
+  return `<div class="asgn-card relative p-5 rounded-3xl overflow-hidden fu fu${Math.min(idx+1,4)}" style="background:var(--surface);border:1.5px solid var(--border)">
+    <div class="card-accent-bar"></div>
+    <div class="flex justify-between items-start mb-4">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="inline-flex items-center gap-1.5 text-[9px] font-bold tracking-[.14em] uppercase px-3 py-1.5 rounded-xl" style="background:${bb};color:${bc}">
+          <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${bd}"></span>${sanitize(item.code)}
+        </span>${ysTag}
+      </div>
+      <button onclick="openModal('${item.id}')" class="w-8 h-8 rounded-xl flex items-center justify-center active:scale-90 flex-shrink-0"
+        style="background:var(--surface2);color:var(--text3)"
+        onmouseenter="this.style.background='var(--red-soft)';this.style.color='var(--red)'"
+        onmouseleave="this.style.background='var(--surface2)';this.style.color='var(--text3)'">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+    <h3 class="font-extrabold text-[16px] leading-snug mb-4" style="color:var(--text);font-family:'Oxanium',sans-serif">${sanitize(item.name)}</h3>
+    <div class="space-y-2 mb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--surface2)">
+          <i data-lucide="calendar-days" class="w-3 h-3" style="color:var(--accent)"></i>
+        </div>
+        <span class="text-xs font-semibold" style="color:var(--text2)">${fmtDate(item.date)}</span>
+        <span class="text-xs">&middot;</span>
+        <span class="text-xs">${dueLabel}</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--surface2)">
+          <i data-lucide="user-round" class="w-3 h-3" style="color:var(--accent)"></i>
+        </div>
+        <span class="text-xs font-semibold" style="color:var(--text2)">${sanitize(item.teacher)}</span>
+      </div>
+    </div>
+    <div class="topic-block px-4 py-3.5">
+      <div class="flex items-center gap-2 mb-2">
+        <i data-lucide="file-text" class="w-3.5 h-3.5 flex-shrink-0" style="color:var(--accent)"></i>
+        <span style="font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">Topic / Details</span>
+      </div>
+      <p class="text-[12px] leading-relaxed font-medium" style="color:var(--text2)">${sanitize(item.topic)}</p>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: LOAD COURSES
+// ════════════════════════════════════════════════════════════════
+async function hLoadCourses() {
+  if (!currentUser) return;
+  try {
+    const ref  = collection(db, "users", currentUser.uid, "attendance");
+    const snap = await getDocs(query(ref, orderBy("createdAt","desc")));
+    hCourses = snap.docs.map(d => {
+      const data = d.data();
+      if (!data.attendance) data.attendance = [];
+      data.attendance = data.attendance.map(a => typeof a==='string'?{date:a,count:1}:a);
+      return { id: d.id, ...data };
+    });
+    resetSync(true);
+  } catch(e) { console.warn('hLoadCourses:', e); }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: PERSIST
+// ════════════════════════════════════════════════════════════════
+async function hPersistCourse(c) {
+  if (!currentUser) return;
+  try {
+    const { attendance, id, ...rest } = c;
+    await setDoc(doc(db, "users", currentUser.uid, "attendance", String(c.id)), { ...rest, attendance, updatedAt: serverTimestamp() }, { merge:true });
+  } catch(e) { console.warn('hPersistCourse:', e); }
+}
+async function hDeleteCourseFromFB(c) {
+  if (!currentUser) return;
+  try { await deleteDoc(doc(db, "users", currentUser.uid, "attendance", String(c.id))); }
+  catch(e) { console.warn('hDeleteCourse:', e); }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: FILTER HELPERS
+// ════════════════════════════════════════════════════════════════
+function hGetUniqueYears() {
+  return [...new Set(hCourses.map(c=>String(c.year||'')).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
+}
+function hGetUniqueSemesters(yr) {
+  return [...new Set(hCourses.filter(c=>!yr||String(c.year)===String(yr)).map(c=>String(c.semesterNum||'')).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
+}
+function hGetUniqueCodes(yr, sem) {
+  return [...new Set(hCourses.filter(c=>{
+    if(yr  && String(c.year       ||'')!==String(yr))  return false;
+    if(sem && String(c.semesterNum||'')!==String(sem)) return false;
+    return true;
+  }).map(c=>c.code).filter(Boolean))].sort();
+}
+function hPopulateYearDropdown() {
+  const sel=document.getElementById('hFYear'); const prev=sel.value;
+  sel.innerHTML='<option value="">All Years</option>'+hGetUniqueYears().map(y=>`<option value="${y}"${String(prev)===String(y)?' selected':''}>Year ${y}</option>`).join('');
+}
+function hPopulateSemesterDropdown(yr) {
+  const sel=document.getElementById('hFSemester'); const prev=sel.value;
+  sel.innerHTML='<option value="">All Semesters</option>'+hGetUniqueSemesters(yr).map(s=>`<option value="${s}"${String(prev)===String(s)?' selected':''}>Semester ${s}</option>`).join('');
+  sel.disabled=!yr;
+}
+function hPopulateCourseDropdown(yr, sem) {
+  const sel=document.getElementById('hFCourse'); const prev=sel.value;
+  const codes=hGetUniqueCodes(yr,sem);
+  sel.innerHTML='<option value="">All Courses</option>'+codes.map(code=>{
+    const m=hCourses.find(c=>c.code===code);
+    return `<option value="${code}"${prev===code?' selected':''}>${m?`${code} — ${m.name}`:code}</option>`;
+  }).join('');
+  sel.disabled=!yr;
+}
+window.hOnYearChange = () => {
+  hHomeFilters.year=document.getElementById('hFYear').value;
+  hHomeFilters.semester=''; hHomeFilters.courseCode='';
+  hPopulateSemesterDropdown(hHomeFilters.year);
+  hPopulateCourseDropdown(hHomeFilters.year,'');
+  document.getElementById('hFSemester').value=''; document.getElementById('hFCourse').value='';
+  hRenderFilterTags(); hRenderHome();
+};
+window.hOnSemesterChange = () => {
+  hHomeFilters.semester=document.getElementById('hFSemester').value;
+  hHomeFilters.courseCode='';
+  hPopulateCourseDropdown(hHomeFilters.year,hHomeFilters.semester);
+  document.getElementById('hFCourse').value='';
+  hRenderFilterTags(); hRenderHome();
+};
+window.hOnCourseChange = () => {
+  hHomeFilters.courseCode=document.getElementById('hFCourse').value;
+  hRenderFilterTags(); hRenderHome();
+};
+window.hClearHomeFilters = () => {
+  hHomeFilters={year:'',semester:'',courseCode:''};
+  document.getElementById('hFYear').value=''; document.getElementById('hFSemester').value='';
+  document.getElementById('hFCourse').value='';
+  hPopulateSemesterDropdown(''); hPopulateCourseDropdown('','');
+  hRenderFilterTags(); hRenderHome();
+};
+window.hClearFilterTag = (type) => {
+  if(type==='year')     { hHomeFilters.year=''; hHomeFilters.semester=''; hHomeFilters.courseCode=''; }
+  if(type==='semester') { hHomeFilters.semester=''; hHomeFilters.courseCode=''; }
+  if(type==='course')   { hHomeFilters.courseCode=''; }
+  document.getElementById('hFYear').value=hHomeFilters.year;
+  document.getElementById('hFSemester').value=hHomeFilters.semester;
+  document.getElementById('hFCourse').value=hHomeFilters.courseCode;
+  hPopulateSemesterDropdown(hHomeFilters.year);
+  hPopulateCourseDropdown(hHomeFilters.year,hHomeFilters.semester);
+  hRenderFilterTags(); hRenderHome();
+};
+function hRenderFilterTags() {
+  const row=document.getElementById('hFilterTagsRow'); const tags=[];
+  if(hHomeFilters.year)       tags.push(`<span class="h-ftag">Year ${hHomeFilters.year}<button class="h-ftag-x" onclick="hClearFilterTag('year')">×</button></span>`);
+  if(hHomeFilters.semester)   tags.push(`<span class="h-ftag h-ftag-sem">Sem ${hHomeFilters.semester}<button class="h-ftag-x" onclick="hClearFilterTag('semester')">×</button></span>`);
+  if(hHomeFilters.courseCode) tags.push(`<span class="h-ftag h-ftag-course">${hHomeFilters.courseCode}<button class="h-ftag-x" onclick="hClearFilterTag('course')">×</button></span>`);
+  if(tags.length) tags.push(`<button class="h-clear-all-btn" onclick="hClearHomeFilters()">Clear all</button>`);
+  row.innerHTML=tags.join('');
+}
+function hGetFilteredCourses() {
+  return hCourses.filter(c=>{
+    if(hHomeFilters.year       && String(c.year       ||'')!==String(hHomeFilters.year))       return false;
+    if(hHomeFilters.semester   && String(c.semesterNum||'')!==String(hHomeFilters.semester))   return false;
+    if(hHomeFilters.courseCode && c.code!==hHomeFilters.courseCode)                            return false;
+    return true;
+  });
+}
+function hInitHomeFilters() {
+  hPopulateYearDropdown();
+  hPopulateSemesterDropdown(hHomeFilters.year);
+  hPopulateCourseDropdown(hHomeFilters.year,hHomeFilters.semester);
+  document.getElementById('hFYear').value=hHomeFilters.year;
+  document.getElementById('hFSemester').value=hHomeFilters.semester;
+  document.getElementById('hFCourse').value=hHomeFilters.courseCode;
+  hRenderFilterTags();
+}
+function hApplyProfileDefaults() {
+  if(!hHomeFilters.year && userDefaults.year) hHomeFilters.year=userDefaults.year;
+  if(!hHomeFilters.semester && userDefaults.sem) hHomeFilters.semester=userDefaults.sem;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: HOME RENDER
+// ════════════════════════════════════════════════════════════════
+window.hRenderHome = () => {
+  hInitHomeFilters();
+  const allAtts=hCourses.flatMap(c=>c.attendance||[]);
+  const s=hCalcStats(allAtts);
+  document.getElementById('hSToday').textContent=s.t;
+  document.getElementById('hSWeek').textContent=s.w;
+  document.getElementById('hSMonth').textContent=s.m;
+  const filtered=hGetFilteredCourses();
+  const grid=document.getElementById('hCourseGrid');
+  if(!hCourses.length) {
+    grid.innerHTML=`<div class="h-empty"><span style="font-size:32px;display:block;margin-bottom:10px;opacity:.5">📚</span>No courses yet.<br>Tap <strong>Add</strong> below to add one.</div>`;
+    return;
+  }
+  if(!filtered.length) {
+    const t=[hHomeFilters.year?`Year ${hHomeFilters.year}`:'',hHomeFilters.semester?`Sem ${hHomeFilters.semester}`:'',hHomeFilters.courseCode||''].filter(Boolean).join(' • ');
+    grid.innerHTML=`<div class="h-no-course-msg"><span style="font-size:28px;display:block;margin-bottom:10px;opacity:.5">🔍</span>No courses for <strong>${t||'this filter'}</strong>.<br><span style="font-size:12px">Try a different filter or <a href="#" onclick="hClearHomeFilters();return false" style="color:var(--accent);text-decoration:none">clear all</a>.</span></div>`;
+    return;
+  }
+  grid.innerHTML=filtered.map(c=>{
+    const yL=c.year?`<span class="h-badge h-badge-p" style="font-size:9px">Y${c.year}</span>`:'';
+    const sL=c.semesterNum?`<span class="h-badge h-badge-y" style="font-size:9px">S${c.semesterNum}</span>`:'';
+    const tot=hTotalClasses(c);
+    return `<div class="h-card h-card-hover" onclick="hOpenDetail('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span class="h-badge h-badge-a">${sanitize(c.code||'')}</span>${yL}${sL}
+        </div>
+        <button class="h-btn h-btn-r h-btn-xs" onclick="event.stopPropagation();hDelCourse('${c.id}')">✕</button>
+      </div>
+      <div class="h-cc-name">${sanitize(c.name)}</div>
+      <div class="h-cc-meta">
+        <span>👤 ${sanitize(c.teacher||'')}</span>
+        ${c.semester?`<span>🏷 ${sanitize(c.semester)}</span>`:''}
+      </div>
+      <div class="h-cc-foot">
+        <span class="h-cc-count">✓ ${tot} classes</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--h-t3)">${c.startDate||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: DETAIL
+// ════════════════════════════════════════════════════════════════
+window.hOpenDetail = (id) => {
+  hCurId=String(id); hAttCountVal=1;
+  const c=hCourses.find(x=>String(x.id)===String(id)); if(!c) return;
+  document.getElementById('hVHome').classList.add('hidden');
+  document.getElementById('hVDetail').classList.remove('hidden');
+  document.getElementById('hVReport').classList.add('hidden');
+  // Update nav
+  document.getElementById('navHHome').classList.remove('active'); document.getElementById('navHHome').style.color='var(--text3)';
+  document.getElementById('navHReport').classList.remove('active'); document.getElementById('navHReport').style.color='var(--text3)';
+  const yL=c.year?`<span class="h-badge h-badge-p">Y${c.year}</span>`:'';
+  const sL=c.semesterNum?`<span class="h-badge h-badge-y">S${c.semesterNum}</span>`:'';
+  document.getElementById('hDetailHeader').innerHTML=`
+    <div style="font-size:20px;font-weight:800;color:var(--h-t);margin-bottom:8px;font-family:'Oxanium',sans-serif">${sanitize(c.name)}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="h-badge h-badge-a">${sanitize(c.code||'')}</span>${yL}${sL}
+      ${c.semester?`<span class="h-badge h-badge-y">${sanitize(c.semester)}</span>`:''}
+      <span style="font-size:12px;color:var(--h-t2)">👤 ${sanitize(c.teacher||'')}</span>
+    </div>`;
+  document.getElementById('hAttDate').value=hToday();
+  document.getElementById('hAttCount').textContent='1'; hAttCountVal=1;
+  hRenderAttBody();
+};
+window.hGoHome = () => {
+  hCurId=null;
+  document.getElementById('hVHome').classList.remove('hidden');
+  document.getElementById('hVDetail').classList.add('hidden');
+  document.getElementById('hVReport').classList.add('hidden');
+  document.getElementById('navHHome').classList.add('active'); document.getElementById('navHHome').style.color='var(--accent)';
+  document.getElementById('navHReport').classList.remove('active'); document.getElementById('navHReport').style.color='var(--text3)';
+  hRenderHome();
+};
+window.hShowView = (view) => {
+  document.getElementById('hVHome').classList.toggle('hidden',   view!=='home');
+  document.getElementById('hVDetail').classList.add('hidden');
+  document.getElementById('hVReport').classList.toggle('hidden', view!=='report');
+  document.getElementById('navHHome').classList.toggle('active',   view==='home');
+  document.getElementById('navHReport').classList.toggle('active', view==='report');
+  document.getElementById('navHHome').style.color   = view==='home'   ? 'var(--accent)':'var(--text3)';
+  document.getElementById('navHReport').style.color = view==='report' ? 'var(--accent)':'var(--text3)';
+  if(view==='report') hInitReport();
+};
+window.hChangeCount = (d) => {
+  hAttCountVal=Math.max(1,Math.min(10,hAttCountVal+d));
+  document.getElementById('hAttCount').textContent=hAttCountVal;
+};
+function hRenderAttBody() {
+  const c=hCourses.find(x=>String(x.id)===String(hCurId)); if(!c) return;
+  document.getElementById('hDsTotalNum').textContent=hTotalClasses(c);
+  document.getElementById('hAttBody').innerHTML=c.attendance.length
+    ? c.attendance.map((a,i)=>`<tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--h-t2)">${hFmtDate(a.date)}</td>
+        <td><span class="h-badge-num">${a.count||1}</span></td>
+        <td><span class="h-badge h-badge-g" style="font-size:10px">Present</span></td>
+        <td style="text-align:right"><button class="h-btn h-btn-r h-btn-xs" onclick="hDelAtt(${i})">🗑</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--h-t3);font-style:italic;font-size:12px">No records yet</td></tr>';
+}
+window.hSubmitAtt = async () => {
+  const d=document.getElementById('hAttDate').value;
+  if(!d) { showToast("Please select a date","error"); return; }
+  const c=hCourses.find(x=>String(x.id)===String(hCurId));
+  const existing=c.attendance.find(a=>a.date===d);
+  if(existing) { existing.count=(existing.count||1)+hAttCountVal; showToast(`Added ${hAttCountVal} class${hAttCountVal>1?'es':''} — total ${existing.count} on this day`,"success"); }
+  else { c.attendance.unshift({date:d,count:hAttCountVal}); showToast(`${hAttCountVal} class${hAttCountVal>1?'es':''} marked for ${hFmtDate(d)}`,"success"); }
+  hRenderAttBody(); await hPersistCourse(c);
+  hAttCountVal=1; document.getElementById('hAttCount').textContent='1';
+  updStats();
+};
+window.hDelAtt = async (i) => {
+  const ok=await hCustomConfirm('Remove this attendance record?','Yes, Remove','🗑️'); if(!ok) return;
+  const c=hCourses.find(x=>String(x.id)===String(hCurId));
+  c.attendance.splice(i,1); hRenderAttBody(); await hPersistCourse(c);
+  showToast("Attendance removed","error"); updStats();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: COURSE CRUD
+// ════════════════════════════════════════════════════════════════
+window.hOpenModal  = () => { document.getElementById('hModal').classList.add('open'); document.getElementById('hIDate').value=hToday(); };
+window.hCloseModal = () => document.getElementById('hModal').classList.remove('open');
+document.getElementById('hModal').addEventListener('click', e=>{ if(e.target===document.getElementById('hModal')) hCloseModal(); });
+document.getElementById('hConfirmBox').addEventListener('click', e=>{ if(e.target===document.getElementById('hConfirmBox')) document.getElementById('hConfirmBox').classList.remove('open'); });
+
+window.hCreateCourse = async () => {
+  const name   =document.getElementById('hIName').value.trim();
+  const code   =document.getElementById('hICode').value.trim().toUpperCase();
+  const teacher=document.getElementById('hITeacher').value.trim();
+  const sem    =document.getElementById('hISem').value.trim();
+  const year   =document.getElementById('hIYear').value;
+  const semNum =document.getElementById('hISemNum').value;
+  const startDate=document.getElementById('hIDate').value||hToday();
+  if(!name||!code||!teacher) { showToast("Name, code & teacher required","error"); return; }
+  const newC = {
+    id: Date.now(), name, code, teacher, semester:sem, year:year||'',
+    semesterNum:semNum||'', startDate, createdAt:hToday(), attendance:[]
+  };
+  hCourses.unshift(newC); hCloseModal();
+  ['hIName','hICode','hISem','hITeacher'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hIYear').value=''; document.getElementById('hISemNum').value='';
+  showToast("Course created ✓","success");
+  hRenderHome(); updStats(); await hPersistCourse(newC);
+};
+window.hDelCourse = async (id) => {
+  const c=hCourses.find(x=>String(x.id)===String(id)); if(!c) return;
+  const ok=await hCustomConfirm(`Delete "${c.name}"?\nAll attendance records will be lost.`,'Yes, Delete','⚠️');
+  if(!ok) return;
+  await hDeleteCourseFromFB(c);
+  hCourses=hCourses.filter(x=>String(x.id)!==String(id));
+  hRenderHome(); showToast("Course deleted","error"); updStats();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: REPORT
+// ════════════════════════════════════════════════════════════════
+function hInitReport() {
+  const sel=document.getElementById('hFCourseR'); const prev=sel.value;
+  sel.innerHTML='<option value="">All Courses</option>'+hCourses.map(c=>`<option value="${c.id}"${String(prev)===String(c.id)?' selected':''}>${c.code} — ${c.name}</option>`).join('');
+  hRenderReport();
+}
+window.hRenderReport = () => {
+  const atts=hGetFilteredAtts();
+  const s=hCalcStats(atts);
+  document.getElementById('hRToday').textContent=s.t;
+  document.getElementById('hRWeek').textContent=s.w;
+  document.getElementById('hRMonth').textContent=s.m;
+  document.getElementById('hRYear').textContent=s.y;
+  hRenderMonthlyChart(atts); hRenderWeeklyChart(atts); hRenderCourseList(atts);
+};
+window.hClearReportFilter = () => {
+  document.getElementById('hFCourseR').value='';
+  document.getElementById('hFFrom').value='';
+  document.getElementById('hFTo').value='';
+  hRenderReport();
+};
+function hGetFilteredAtts() {
+  const cid=document.getElementById('hFCourseR').value;
+  const from=document.getElementById('hFFrom').value;
+  const to=document.getElementById('hFTo').value;
+  const src=cid?hCourses.filter(c=>String(c.id)===String(cid)):hCourses;
+  const atts=[];
+  src.forEach(c=>(c.attendance||[]).forEach(a=>{
+    if(from&&a.date<from) return; if(to&&a.date>to) return;
+    atts.push({...a,count:a.count||1,courseId:c.id,courseName:c.name,courseCode:c.code,teacher:c.teacher,startDate:c.startDate,semester:c.semester});
+  }));
+  return atts;
+}
+function hRenderMonthlyChart(atts) {
+  const now=new Date(),yr=now.getFullYear();
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const counts=Array(12).fill(0);
+  atts.forEach(a=>{ const d=new Date(a.date+'T00:00:00'); if(d.getFullYear()===yr) counts[d.getMonth()]+=(a.count||1); });
+  hBuildChart('hChartMonthly','bar',months,counts,{label:'Classes',color:'rgba(92,63,214,.75)',border:'#5C3FD6'});
+}
+function hRenderWeeklyChart(atts) {
+  const labels=[],counts=[]; const now=new Date();
+  for(let w=7;w>=0;w--) {
+    const ws=new Date(now); ws.setDate(now.getDate()-now.getDay()-w*7); ws.setHours(0,0,0,0);
+    const we=new Date(ws); we.setDate(ws.getDate()+6); we.setHours(23,59,59,999);
+    const cnt=atts.filter(a=>{ const d=new Date(a.date+'T00:00:00'); return d>=ws&&d<=we; }).reduce((s,a)=>s+(a.count||1),0);
+    labels.push(`${ws.getDate()}/${ws.getMonth()+1}`); counts.push(cnt);
+  }
+  hBuildChart('hChartWeekly','line',labels,counts,{label:'Classes',color:'rgba(30,158,108,.75)',border:'#1E9E6C'});
+}
+function hBuildChart(id,type,labels,data,{label,color,border}) {
+  if(hCharts[id]) hCharts[id].destroy();
+  const ctx=document.getElementById(id); if(!ctx) return;
+  hCharts[id]=new Chart(ctx,{
+    type,
+    data:{labels,datasets:[{label,data,backgroundColor:color,borderColor:border,borderWidth:2,borderRadius:type==='bar'?6:0,fill:type==='line',tension:.4,pointBackgroundColor:border,pointRadius:3}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>`${i.raw} classes`}}},
+      scales:{
+        x:{ticks:{color:'var(--text3)',font:{size:10,family:'JetBrains Mono'}},grid:{color:'rgba(0,0,0,.06)'}},
+        y:{ticks:{color:'var(--text3)',font:{size:10,family:'JetBrains Mono'},stepSize:1},grid:{color:'rgba(0,0,0,.06)'},beginAtZero:true}
+      }
+    }
+  });
+}
+function hRenderCourseList(atts) {
+  const cid=document.getElementById('hFCourseR').value;
+  const src=cid?hCourses.filter(c=>String(c.id)===String(cid)):hCourses;
+  const totalAll=atts.reduce((s,a)=>s+(a.count||1),0)||1;
+  document.getElementById('hCourseReportList').innerHTML=!src.length
+    ? `<div class="h-empty">No courses found.</div>`
+    : src.map(c=>{
+        const cAtts=atts.filter(a=>String(a.courseId)===String(c.id));
+        const cnt=cAtts.reduce((s,a)=>s+(a.count||1),0);
+        const pct=Math.round(cnt/totalAll*100);
+        const lastAtt=cAtts.length?cAtts.reduce((a,b)=>a.date>b.date?a:b):null;
+        return `<div class="h-cr-row">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div class="h-cr-name"><span class="h-badge h-badge-a" style="margin-right:7px">${sanitize(c.code||'')}</span>${sanitize(c.name)}</div>
+              <div class="h-cr-meta">
+                <span>👤 ${sanitize(c.teacher||'')}</span>
+                ${c.year?`<span>Y${c.year}</span>`:''}${c.semesterNum?`<span>S${c.semesterNum}</span>`:''}
+                ${lastAtt?`<span>Last: ${hFmtDate(lastAtt.date)}</span>`:''}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div class="h-cr-num">${cnt}</div>
+              <div style="font-size:10px;color:var(--h-t3);font-family:'JetBrains Mono',monospace">classes</div>
+            </div>
+          </div>
+          <div class="h-cr-bar"><div class="h-cr-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HAJIRA: UTILS
+// ════════════════════════════════════════════════════════════════
+function hCalcStats(atts) {
+  const now=new Date(),td=hToday();
+  const sw=new Date(now); sw.setDate(now.getDate()-now.getDay()); sw.setHours(0,0,0,0);
+  let t=0,w=0,m=0,y=0;
+  atts.forEach(a=>{
+    const d=new Date(a.date+'T00:00:00'); const n=a.count||1;
+    if(a.date===td) t+=n;
+    if(d>=sw) w+=n;
+    if(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()) m+=n;
+    if(d.getFullYear()===now.getFullYear()) y+=n;
+  });
+  return{t,w,m,y};
+}
+function hTotalClasses(c) { return(c.attendance||[]).reduce((s,a)=>s+(a.count||1),0); }
+function hToday() { return new Date().toISOString().split('T')[0]; }
+function hFmtDate(d) {
+  if(!d) return '—';
+  try { return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+  catch { return d; }
+}
+
+function hCustomConfirm(msg, yesLabel='Delete', icon='⚠️') {
+  return new Promise(resolve=>{
+    document.getElementById('hConfirmMsg').textContent=msg;
+    document.getElementById('hConfirmIcon').textContent=icon;
+    document.getElementById('hConfirmYes').textContent=yesLabel;
+    document.getElementById('hConfirmBox').classList.add('open');
+    const yes=document.getElementById('hConfirmYes'), no=document.getElementById('hConfirmNo');
+    function cleanup(val) {
+      document.getElementById('hConfirmBox').classList.remove('open');
+      yes.removeEventListener('click',onYes); no.removeEventListener('click',onNo); resolve(val);
+    }
+    const onYes=()=>cleanup(true), onNo=()=>cleanup(false);
+    yes.addEventListener('click',onYes); no.addEventListener('click',onNo);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SHARED HELPERS
+// ════════════════════════════════════════════════════════════════
+function sanitize(s='') { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function getDueDays(ds) {
+  if(!ds) return null;
+  const due=new Date(ds),now=new Date();
+  now.setHours(0,0,0,0); due.setHours(0,0,0,0);
+  return Math.round((due-now)/864e5);
+}
+function fmtDate(ds) {
+  if(!ds) return '';
+  try { return new Date(ds+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+  catch { return ds; }
+}
+function yrLabel(y) { return{'1':'1st Year','2':'2nd Year','3':'3rd Year','4':'4th Year'}[y]||`Year ${y}`; }
+function getFriendlyError(e) {
+  if(!e) return "Unknown error.";
+  if(e.code==='permission-denied') return "Permission denied.";
+  if(e.code==='unavailable')       return "Service unavailable. Check internet.";
+  if(e.code==='not-found')         return "Document not found.";
+  return e.message||"Something went wrong.";
+}
+function setShimmer(v) {
+  document.getElementById('shimmerLoad').classList.toggle('hidden',!v);
+  document.getElementById('taskList').classList.toggle('hidden',v);
+}
+function showErrorState(msg) {
+  document.getElementById('errorState').classList.remove('hidden');
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('errorMsg').textContent=msg;
+  lucide.createIcons();
+}
+function hideErrorState() { document.getElementById('errorState').classList.add('hidden'); }
+function resetSync(ok) {
+  const dot=document.getElementById('syncDot');
+  dot.style.background=ok?'var(--accent)':'var(--text3)';
+  dot.className=`h-1.5 w-1.5 rounded-full${ok?' pulse-dot':''}`;
+  document.getElementById('syncLabel').textContent=ok?'Synced':(currentUser?'Sync Error':'Not signed in');
+}
+function populateHeader(user) {
+  document.getElementById('userAvatar').src=user.photoURL||'';
+  document.getElementById('headerAvatarBtn').style.display='';
+  document.getElementById('avatarPlaceholder').style.display='none';
+  document.getElementById('drawerAvatar').src=user.photoURL||'';
+  document.getElementById('drawerName').textContent=user.displayName||'User';
+  document.getElementById('drawerEmail').textContent=user.email||'';
+  const ll=user.metadata?.lastSignInTime;
+  document.getElementById('drawerLastLogin').textContent=ll
+    ?new Date(ll).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+  lucide.createIcons();
+}
+function updStats() {
+  const total   =assignments.length;
+  const overdue =assignments.filter(a=>{const d=getDueDays(a.date);return d!==null&&d<0;}).length;
+  const dueSoon =assignments.filter(a=>{const d=getDueDays(a.date);return d!==null&&d>=0&&d<=3;}).length;
+  const courses =new Set(assignments.map(a=>a.code).filter(c=>c&&c!=='N/A')).size;
+  document.getElementById('drawerCount').textContent   =total;
+  document.getElementById('drawerOverdue').textContent =overdue;
+  document.getElementById('drawerDueSoon').textContent =dueSoon;
+  document.getElementById('drawerCourses').textContent =courses;
+  // Hajira stats
+  document.getElementById('drawerHCourses').textContent =hCourses.length;
+  document.getElementById('drawerHClasses').textContent =hCourses.reduce((s,c)=>s+hTotalClasses(c),0);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  UI SHELL
+// ════════════════════════════════════════════════════════════════
+window.switchTab = (tab) => {
+  const v=tab==='view';
+  document.getElementById('viewSection').classList.toggle('hidden',!v);
+  document.getElementById('searchBar').classList.toggle('hidden',!v);
+  document.getElementById('filterBar').classList.toggle('hidden',!v);
+  document.getElementById('addSection').classList.toggle('hidden',v);
+  const nv=document.getElementById('navView'), na=document.getElementById('navAdd');
+  nv.style.color=v?'var(--accent)':'var(--text3)';
+  na.style.color=!v?'var(--accent)':'var(--text3)';
+  nv.classList.toggle('active',v); na.classList.toggle('active',!v);
+  if(v) { applyFilters(); }
+  else {
+    if(activeYear) document.getElementById('addYear').value=activeYear;
+    if(activeSem)  document.getElementById('addSem').value=activeSem;
+    showAutofillHint();
+  }
+};
+function showAutofillHint() {
+  const hint=document.getElementById('autofillHint');
+  const txt=document.getElementById('autofillText');
+  const parts=[];
+  if(activeYear) parts.push(yrLabel(activeYear));
+  if(activeSem)  parts.push(`Semester ${activeSem}`);
+  if(parts.length){ txt.textContent=`Pre-filled from active filter: ${parts.join(' · ')}`; hint.classList.remove('hidden'); }
+  else hint.classList.add('hidden');
+}
+window.openDrawer = () => {
+  updStats(); syncDrawerDefaultLabel();
+  document.getElementById('profileDrawer').classList.remove('translate-x-full');
+  document.getElementById('drawerBackdrop').classList.remove('opacity-0','pointer-events-none');
+  document.getElementById('drawerBackdrop').classList.add('opacity-100','pointer-events-auto');
+};
+window.closeDrawer = () => {
+  document.getElementById('profileDrawer').classList.add('translate-x-full');
+  document.getElementById('drawerBackdrop').classList.add('opacity-0','pointer-events-none');
+  document.getElementById('drawerBackdrop').classList.remove('opacity-100','pointer-events-auto');
+};
+window.openLogoutModal        = () => { closeDrawer(); openBS('logoutModal'); };
+window.closeLogoutModal       = () => closeBS('logoutModal');
+window.openDefaultFilterModal = () => {
+  closeDrawer();
+  document.getElementById('dfYear').value=userDefaults.year||'';
+  document.getElementById('dfSem').value =userDefaults.sem ||'';
+  openBS('defaultFilterModal');
+};
+window.closeDefaultFilterModal = () => closeBS('defaultFilterModal');
+window.showToast = (msg, type='success') => {
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastIcon').style.background=type==='error'?'var(--red)':'var(--accent)';
+  const t=document.getElementById('toast');
+  t.classList.remove('toast-hide'); t.classList.add('toast-show');
+  setTimeout(()=>{ t.classList.add('toast-hide'); t.classList.remove('toast-show'); },3000);
+};
+window.toggleRemember = () => {
+  const cb=document.getElementById('rememberCheck'); cb.checked=!cb.checked;
+  document.getElementById('rememberTrack').style.background=cb.checked?'var(--accent)':'rgba(255,255,255,.15)';
+  document.getElementById('rememberThumb').style.transform=cb.checked?'translateX(22px)':'translateX(0)';
+};
+function showLoginOverlay() {
+  const el=document.getElementById('loginOverlay'); el.style.display='flex'; el.style.opacity='1'; el.classList.remove('hide');
+  document.getElementById('headerAvatarBtn').style.display='none';
+  document.getElementById('avatarPlaceholder').style.display='';
+}
+function hideLoginOverlay() {
+  const el=document.getElementById('loginOverlay'); el.classList.add('hide');
+  setTimeout(()=>el.style.display='none',450);
+}
+function openBS(id) {
+  const m=document.getElementById(id);
+  m.classList.remove('opacity-0','pointer-events-none'); m.classList.add('opacity-100','pointer-events-auto');
+  m.querySelector('.modal-sheet').classList.remove('translate-y-full');
+}
+function closeBS(id) {
+  const m=document.getElementById(id);
+  m.querySelector('.modal-sheet').classList.add('translate-y-full');
+  setTimeout(()=>{ m.classList.add('opacity-0','pointer-events-none'); m.classList.remove('opacity-100','pointer-events-auto'); },360);
+}
+window.addEventListener('scroll', ()=>{
+  document.getElementById('stickyHeader').classList.toggle('scrolled', window.scrollY>8);
+});
+</script>
+
+<!-- Dark Mode -->
+<script>
+(function(){
+  if(localStorage.getItem('dm')==='dark')
+    document.documentElement.setAttribute('data-theme','dark');
+})();
+
+function syncDmToggle(isDark) {
+  const knob=document.getElementById('dmKnob');
+  const track=document.getElementById('dmTrack');
+  const icon=document.getElementById('dmIcon');
+  if(!knob) return;
+  knob.style.transform=isDark?'translateX(24px)':'translateX(0)';
+  track.style.background=isDark?'var(--accent)':'var(--border2)';
+  if(icon){ icon.setAttribute('data-lucide',isDark?'sun':'moon'); lucide.createIcons(); }
+}
+
+window.toggleDarkMode = function() {
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+  localStorage.setItem('dm',isDark?'light':'dark');
+  syncDmToggle(!isDark);
+};
+
+window.onload = function() {
+  lucide.createIcons();
+  syncDmToggle(document.documentElement.getAttribute('data-theme')==='dark');
+  // Ensure attendance is the default active nav
+  document.getElementById('navAttend').classList.add('flex');
+  document.getElementById('navAttend').classList.remove('hidden');
+  document.getElementById('navAssign').classList.add('hidden');
+};
+</script>
+</body>
+</html>
